@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.xiaomi.shop.build.gradle.plugin'
 
 android {
     compileSdkVersion 28
