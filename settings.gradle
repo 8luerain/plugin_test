@@ -1,2 +1,2 @@
-include ':app', ':baselib', ':plugina', ':pluginb', ':gradle-plugin'
+include ':app', ':baselib', ':plugina', ':pluginb', ':gradle-plugin', ':annoatationlib'
 rootProject.name='PluginTest'

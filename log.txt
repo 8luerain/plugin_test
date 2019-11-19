@@ -1,0 +1,284 @@
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :buildSrc:assemble UP-TO-DATE
+> Task :buildSrc:compileTestJava NO-SOURCE
+> Task :buildSrc:compileTestGroovy NO-SOURCE
+> Task :buildSrc:processTestResources NO-SOURCE
+> Task :buildSrc:testClasses UP-TO-DATE
+> Task :buildSrc:test NO-SOURCE
+> Task :buildSrc:check UP-TO-DATE
+> Task :buildSrc:build UP-TO-DATE
+
+> Configure project :plugina
+WARNING: Configuration 'compile' is obsolete and has been replaced with 'implementation' and 'api'.
+It will be removed soon. For more information see: http://d.android.com/r/tools/update-dependency-configurations.html
+taskname [androidDependencies]
+taskname [assemble]
+taskname [assembleAndroidTest]
+taskname [assembleDebug]
+taskname [assembleDebugAndroidTest]
+taskname [assembleDebugUnitTest]
+taskname [assembleRelease]
+taskname [assembleReleaseUnitTest]
+taskname [build]
+taskname [buildDebugPreBundle]
+taskname [buildDependents]
+taskname [buildEnvironment]
+taskname [buildNeeded]
+taskname [buildReleasePreBundle]
+taskname [bundle]
+taskname [bundleDebug]
+taskname [bundleDebugAndroidTestClasses]
+taskname [bundleDebugAndroidTestResources]
+taskname [bundleDebugClasses]
+taskname [bundleDebugResources]
+taskname [bundleDebugUnitTestClasses]
+taskname [bundleRelease]
+taskname [bundleReleaseClasses]
+taskname [bundleReleaseResources]
+taskname [bundleReleaseUnitTestClasses]
+taskname [check]
+taskname [checkDebugAndroidTestDuplicateClasses]
+taskname [checkDebugDuplicateClasses]
+taskname [checkDebugManifest]
+taskname [checkReleaseDuplicateClasses]
+taskname [checkReleaseManifest]
+taskname [clean]
+taskname [cleanBuildCache]
+taskname [collectDebugDependencies]
+taskname [collectReleaseDependencies]
+taskname [compileDebugAidl]
+taskname [compileDebugAndroidTestAidl]
+taskname [compileDebugAndroidTestJavaWithJavac]
+taskname [compileDebugAndroidTestRenderscript]
+taskname [compileDebugAndroidTestShaders]
+taskname [compileDebugAndroidTestSources]
+taskname [compileDebugJavaWithJavac]
+taskname [compileDebugRenderscript]
+taskname [compileDebugShaders]
+taskname [compileDebugSources]
+taskname [compileDebugUnitTestJavaWithJavac]
+taskname [compileDebugUnitTestSources]
+taskname [compileLint]
+taskname [compileReleaseAidl]
+taskname [compileReleaseJavaWithJavac]
+taskname [compileReleaseRenderscript]
+taskname [compileReleaseShaders]
+taskname [compileReleaseSources]
+taskname [compileReleaseUnitTestJavaWithJavac]
+taskname [compileReleaseUnitTestSources]
+taskname [components]
+taskname [configureDebugDependencies]
+taskname [configureReleaseDependencies]
+taskname [connectedAndroidTest]
+taskname [connectedCheck]
+taskname [connectedDebugAndroidTest]
+taskname [consumeConfigAttr]
+taskname [createDebugCompatibleScreenManifests]
+taskname [createMockableJar]
+taskname [createReleaseCompatibleScreenManifests]
+taskname [dependencies]
+taskname [dependencyInsight]
+taskname [dependentComponents]
+taskname [deviceAndroidTest]
+taskname [deviceCheck]
+taskname [dummydebugUnitTest]
+taskname [dummyreleaseUnitTest]
+taskname [extractApksForDebug]
+taskname [extractApksForRelease]
+taskname [extractProguardFiles]
+taskname [generateDebugAndroidTestAssets]
+taskname [generateDebugAndroidTestBuildConfig]
+taskname [generateDebugAndroidTestResValues]
+taskname [generateDebugAndroidTestResources]
+taskname [generateDebugAndroidTestSources]
+taskname [generateDebugAssets]
+taskname [generateDebugBuildConfig]
+taskname [generateDebugFeatureMetadata]
+taskname [generateDebugFeatureTransitiveDeps]
+taskname [generateDebugResValues]
+taskname [generateDebugResources]
+taskname [generateDebugSources]
+taskname [generateDebugUnitTestAssets]
+taskname [generateDebugUnitTestResources]
+taskname [generateDebugUnitTestSources]
+taskname [generateReleaseAssets]
+taskname [generateReleaseBuildConfig]
+taskname [generateReleaseFeatureMetadata]
+taskname [generateReleaseFeatureTransitiveDeps]
+taskname [generateReleaseResValues]
+taskname [generateReleaseResources]
+taskname [generateReleaseSources]
+taskname [generateReleaseUnitTestAssets]
+taskname [generateReleaseUnitTestResources]
+taskname [generateReleaseUnitTestSources]
+taskname [help]
+taskname [installDebug]
+taskname [installDebugAndroidTest]
+taskname [javaPreCompileDebug]
+taskname [javaPreCompileDebugAndroidTest]
+taskname [javaPreCompileDebugUnitTest]
+taskname [javaPreCompileRelease]
+taskname [javaPreCompileReleaseUnitTest]
+taskname [lint]
+taskname [lintDebug]
+taskname [lintFix]
+taskname [lintRelease]
+taskname [lintVitalRelease]
+taskname [mainApkListPersistenceDebug]
+taskname [mainApkListPersistenceDebugAndroidTest]
+taskname [mainApkListPersistenceRelease]
+taskname [makeApkFromBundleForDebug]
+taskname [makeApkFromBundleForRelease]
+taskname [mergeDebugAndroidTestAssets]
+taskname [mergeDebugAndroidTestGeneratedProguardFiles]
+taskname [mergeDebugAndroidTestJavaResource]
+taskname [mergeDebugAndroidTestJniLibFolders]
+taskname [mergeDebugAndroidTestNativeLibs]
+taskname [mergeDebugAndroidTestResources]
+taskname [mergeDebugAndroidTestShaders]
+taskname [mergeDebugAssets]
+taskname [mergeDebugGeneratedProguardFiles]
+taskname [mergeDebugJavaResource]
+taskname [mergeDebugJniLibFolders]
+taskname [mergeDebugNativeLibs]
+taskname [mergeDebugResources]
+taskname [mergeDebugShaders]
+taskname [mergeDexDebug]
+taskname [mergeDexDebugAndroidTest]
+taskname [mergeDexRelease]
+taskname [mergeExtDexDebug]
+taskname [mergeExtDexDebugAndroidTest]
+taskname [mergeExtDexRelease]
+taskname [mergeReleaseAssets]
+taskname [mergeReleaseGeneratedProguardFiles]
+taskname [mergeReleaseJavaResource]
+taskname [mergeReleaseJniLibFolders]
+taskname [mergeReleaseNativeLibs]
+taskname [mergeReleaseResources]
+taskname [mergeReleaseShaders]
+taskname [model]
+taskname [my_plugin_test]
+taskname [packageDebug]
+taskname [packageDebugAndroidTest]
+taskname [packageDebugBundle]
+taskname [packageDebugUniversalApk]
+taskname [packageRelease]
+taskname [packageReleaseBundle]
+taskname [packageReleaseUniversalApk]
+taskname [preBuild]
+taskname [preDebugAndroidTestBuild]
+taskname [preDebugBuild]
+taskname [preDebugUnitTestBuild]
+taskname [preReleaseBuild]
+taskname [preReleaseUnitTestBuild]
+taskname [prepareKotlinBuildScriptModel]
+taskname [prepareLintJar]
+taskname [prepareLintJarForPublish]
+taskname [processDebugAndroidTestJavaRes]
+taskname [processDebugAndroidTestManifest]
+taskname [processDebugAndroidTestResources]
+taskname [processDebugJavaRes]
+taskname [processDebugManifest]
+taskname [processDebugResources]
+taskname [processDebugUnitTestJavaRes]
+taskname [processReleaseJavaRes]
+taskname [processReleaseManifest]
+taskname [processReleaseResources]
+taskname [processReleaseUnitTestJavaRes]
+taskname [projects]
+taskname [properties]
+taskname [reportBuildArtifactsDebug]
+taskname [reportBuildArtifactsRelease]
+taskname [reportSourceSetTransformAndroidTest]
+taskname [reportSourceSetTransformAndroidTestDebug]
+taskname [reportSourceSetTransformDebug]
+taskname [reportSourceSetTransformMain]
+taskname [reportSourceSetTransformRelease]
+taskname [reportSourceSetTransformTest]
+taskname [reportSourceSetTransformTestDebug]
+taskname [reportSourceSetTransformTestRelease]
+taskname [resolveConfigAttr]
+taskname [signDebugBundle]
+taskname [signReleaseBundle]
+taskname [signingConfigWriterDebug]
+taskname [signingConfigWriterDebugAndroidTest]
+taskname [signingConfigWriterRelease]
+taskname [signingReport]
+taskname [sourceSets]
+taskname [stripDebugDebugSymbols]
+taskname [stripReleaseDebugSymbols]
+taskname [tasks]
+taskname [test]
+taskname [testDebugUnitTest]
+taskname [testReleaseUnitTest]
+taskname [transformClassesWithDexBuilderForDebug]
+taskname [transformClassesWithDexBuilderForDebugAndroidTest]
+taskname [transformClassesWithDexBuilderForRelease]
+taskname [uninstallAll]
+taskname [uninstallDebug]
+taskname [uninstallDebugAndroidTest]
+taskname [uninstallRelease]
+taskname [validateSigningDebug]
+taskname [validateSigningDebugAndroidTest]
+taskname [writeDebugApplicationId]
+taskname [writeDebugModuleMetadata]
+taskname [writeReleaseApplicationId]
+taskname [writeReleaseModuleMetadata]
+
+> Task :annoatationlib:preBuild UP-TO-DATE
+> Task :annoatationlib:preReleaseBuild UP-TO-DATE
+> Task :annoatationlib:compileReleaseAidl NO-SOURCE
+> Task :annoatationlib:checkReleaseManifest UP-TO-DATE
+> Task :annoatationlib:generateReleaseBuildConfig UP-TO-DATE
+> Task :annoatationlib:compileReleaseRenderscript NO-SOURCE
+> Task :annoatationlib:generateReleaseResValues UP-TO-DATE
+> Task :annoatationlib:generateReleaseResources UP-TO-DATE
+> Task :annoatationlib:packageReleaseResources UP-TO-DATE
+> Task :annoatationlib:parseReleaseLibraryResources UP-TO-DATE
+> Task :annoatationlib:processReleaseManifest UP-TO-DATE
+> Task :annoatationlib:generateReleaseRFile UP-TO-DATE
+> Task :annoatationlib:javaPreCompileRelease UP-TO-DATE
+> Task :annoatationlib:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :annoatationlib:bundleLibCompileRelease UP-TO-DATE
+> Task :baselib:preBuild UP-TO-DATE
+> Task :baselib:preReleaseBuild UP-TO-DATE
+> Task :annoatationlib:packageReleaseRenderscript NO-SOURCE
+> Task :baselib:compileReleaseAidl NO-SOURCE
+> Task :baselib:compileReleaseRenderscript NO-SOURCE
+> Task :baselib:checkReleaseManifest UP-TO-DATE
+> Task :baselib:generateReleaseBuildConfig UP-TO-DATE
+> Task :baselib:generateReleaseResValues UP-TO-DATE
+> Task :baselib:generateReleaseResources UP-TO-DATE
+> Task :baselib:packageReleaseResources UP-TO-DATE
+> Task :baselib:parseReleaseLibraryResources UP-TO-DATE
+> Task :baselib:processReleaseManifest UP-TO-DATE
+> Task :baselib:generateReleaseRFile UP-TO-DATE
+> Task :baselib:javaPreCompileRelease UP-TO-DATE
+> Task :baselib:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :baselib:bundleLibCompileRelease UP-TO-DATE
+> Task :plugina:preBuild
+> Task :plugina:preReleaseBuild
+> Task :plugina:compileReleaseAidl NO-SOURCE
+> Task :baselib:packageReleaseRenderscript NO-SOURCE
+> Task :plugina:compileReleaseRenderscript NO-SOURCE
+> Task :plugina:checkReleaseManifest UP-TO-DATE
+> Task :plugina:generateReleaseBuildConfig UP-TO-DATE
+> Task :plugina:javaPreCompileRelease UP-TO-DATE
+> Task :plugina:mainApkListPersistenceRelease UP-TO-DATE
+> Task :plugina:generateReleaseResValues UP-TO-DATE
+> Task :plugina:generateReleaseResources
+> Task :plugina:mergeReleaseResources UP-TO-DATE
+> Task :plugina:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :plugina:processReleaseManifest UP-TO-DATE
+> Task :plugina:processReleaseResources UP-TO-DATE
+> Task :plugina:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :plugina:compileReleaseSources
+> Task :annoatationlib:prepareLintJarForPublish UP-TO-DATE
+> Task :baselib:prepareLintJarForPublish UP-TO-DATE
+> Task :plugina:prepareLintJar UP-TO-DATE
+> Task :plugina:lintVitalRelease FAILED
+38 actionable tasks: 5 executed, 33 up-to-date
