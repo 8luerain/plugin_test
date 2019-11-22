@@ -1,4 +1,4 @@
-package com.xiaomi.shop.plugin
+package com.xiaomi.shop.build.gradle.plugins
 
 class MishopExtension {
     /**

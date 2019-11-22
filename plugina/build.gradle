@@ -23,6 +23,20 @@ android {
         }
     }
 
+    aaptOptions{
+        File stable_id_file = project.file('stable_id_file.txt')
+        if (stable_id_file.exists()) {
+            additionalParameters "--emit-ids", "${project.file('stable_id_file.txt').absolutePath}"
+        } else {
+            stable_id_file.createNewFile()
+            additionalParameters "--emit-ids", "${project.file('stable_id_file.txt').absolutePath}"
+        }
+    }
+
+}
+
+pluginconfig{
+    libraryName 'baselib'
 }
 
 dependencies {

@@ -1,6 +1,6 @@
 package com.xiaomi.shop.build.gradle.plugins
 
-
+import com.android.build.gradle.AppExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.internal.api.ApplicationVariantImpl
 import com.android.build.gradle.internal.api.LibraryVariantImpl
@@ -9,13 +9,11 @@ import com.android.build.gradle.internal.ide.dependencies.BuildMappingUtils
 import com.android.builder.model.Dependencies
 import com.android.builder.model.SyncIssue
 import com.google.common.collect.ImmutableMap
-import com.xiaomi.shop.build.gradle.plugins.hooker.ProcessResourcesHooker
+import com.xiaomi.shop.build.gradle.plugins.hooker.GenerateLibraryRFileHooker
 import com.xiaomi.shop.build.gradle.plugins.hooker.TaskHookerManager
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.execution.TaskExecutionListener
-import org.gradle.api.tasks.TaskState
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 
@@ -32,7 +30,9 @@ class ShopPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-//        def android = project.extensions.findByType(AppExtension.class)
+        initialConfig(project)
+//        def android = project.extensions.findByType(AppExtension)
+//        android.defaultConfig.buildConfigField("int", "PACKAGE_ID", "0x" + Integer.toHexString(0x16))
 //        android.applicationVariants.all {
 //            ApplicationVariantImpl applicationVariant ->
 //                if (applicationVariant.name == "release") {
@@ -47,7 +47,43 @@ class ShopPlugin implements Plugin<Project> {
 //                    }
 //                }
 //        }
+//        android.registerTransform(new TestTransform())
+//        if (project.getName() == "plugina") {
+//            project.getExtensions().getByType(AppExtension).applicationVariants.each {
+//                ApplicationVariantImpl applicationVariant ->
+//                    if (applicationVariant.variantData.name == "release") {
+//                    }
+//            }
+//        }
 
+//        project.afterEvaluate {
+//            if (project.name == "plugina") {
+//               AppExtension  androidConfig = project.getExtensions().findByType(AppExtension)
+//                println("srcdirs[${androidConfig.sourceSets.main.java.srcDirs}]")
+//                androidConfig.applicationVariants.all {
+//                    ApplicationVariantImpl variant  = it
+//                    MergeResources task  = variant.variantData.taskContainer.mergeResourcesTask.get()
+//                    task.doLast {
+//                        println("mergeResourcesTask outputdir[${task.outputDir}]")
+//                    }
+//                }
+//            }
+//        }
+
+//        project.rootProject.subprojects { Project p ->
+//            p.configurations.all {
+//                Configuration configuration ->
+//                    configuration.resolutionStrategy {
+//                        ResolutionStrategy resolutionStrategy ->
+//                            resolutionStrategy.eachDependency {
+//                                DependencyResolveDetails details ->
+//                                    if (project.name == "plugina"){
+//                                        println("projectname[${project.name}] --- depence name[${details.requested.name}] version[${details.requested.version}]")
+//                                    }
+//                            }
+//                    }
+//            }
+//        }
 //        project.rootProject.allprojects {
 //            if (it.name == "plugina") {
 //                Project pluginaProject = it
@@ -65,24 +101,24 @@ class ShopPlugin implements Plugin<Project> {
 //                                    getOutputs(TaskOutputHolder.TaskOutputType.PROCESSED_RES).each {
 //                                println("out file [${it.outputFile}]")
 //                            }
-////                            mergeResourcesTask.outputs..each {
-////                                println("out file [${it.absolutePath}]")
-////                            }
+//                            mergeResourcesTask.outputs..each {
+//                                println("out file [${it.absolutePath}]")
+//                            }
 //                        }
 //                }
-////                        project.tasks.each {
-////                            it.doFirst {
-////                                it.inputs.files.each {
-////                                    println("input file [${it.absolutePath}]")
-////                                }
-////                            }
-////                            it.doLast {
-////                                it.outputs.files.each {
-////                                    println("out file [${it.absolutePath}]")
-////                                }
-////                            }
-////                        }
-////                }
+//                        project.tasks.each {
+//                            it.doFirst {
+//                                it.inputs.files.each {
+//                                    println("input file [${it.absolutePath}]")
+//                                }
+//                            }
+//                            it.doLast {
+//                                it.outputs.files.each {
+//                                    println("out file [${it.absolutePath}]")
+//                                }
+//                            }
+//                        }
+//                }
 //            }
 //            if (it.name == "baselib") {
 //                Project baselibProject = it
@@ -131,13 +167,18 @@ class ShopPlugin implements Plugin<Project> {
 //                }
 //            }
 //        }
+        def pps = project.extensions.extraProperties.getProperties().toString()
+        println("ext properties [${pps}]")
 //        testMethod(project)
         Task my_plugin_task = project.task("my_plugin_test").doFirst {
 //            performMyTask(project)
         }
+        project.afterEvaluate {
+            AppExtension android = project.getExtensions().findByType(AppExtension)
+        }
         my_plugin_task.setGroup("hello gradle")
-        VATaskHookerManager manager = new VATaskHookerManager(project, instantiator)
-        manager.registerTaskHookers()
+
+
 //        project.afterEvaluate {
 //           AppExtension extension =  project.getExtensions().getByName(AppExtension)
 //            extension.applicationVariants.all {
@@ -171,10 +212,12 @@ class ShopPlugin implements Plugin<Project> {
 //        }
 //    }
 
-    private void testMethod(Project project) {
-        project.gradle.addListener(new TaskTestListener())
-    }
 
+     void initialConfig(Project project) {
+         project.getExtensions().add("pluginconfig" , PluginConfigExtension)
+         VATaskHookerManager manager = new VATaskHookerManager(project, instantiator)
+         manager.registerTaskHookers()
+    }
 
     private void collectLibraryDependencies(Project libProject) {
         libProject.afterEvaluate {
@@ -228,19 +271,6 @@ class ShopPlugin implements Plugin<Project> {
     }
 
 
-    static class TaskTestListener implements TaskExecutionListener {
-        @Override
-        void beforeExecute(Task task) {
-            println("beforeExecute[" + task.name + "]")
-        }
-
-        @Override
-        void afterExecute(Task task, TaskState taskState) {
-            println("afterExecute[" + task.name + "]")
-        }
-    }
-
-
     static class VATaskHookerManager extends TaskHookerManager {
 
         VATaskHookerManager(Project project, Instantiator instantiator) {
@@ -253,7 +283,9 @@ class ShopPlugin implements Plugin<Project> {
                 if (!appVariant.buildType.name.equalsIgnoreCase("release")) {
                     return
                 }
-                registerTaskHooker(instantiator.newInstance(ProcessResourcesHooker, project, appVariant))
+                println("susscee registerTaskHookers")
+//                registerTaskHooker(instantiator.newInstance(ProcessResourcesHooker, project, appVariant))
+                registerTaskHooker(instantiator.newInstance(GenerateLibraryRFileHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(PrepareDependenciesHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(MergeAssetsHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(MergeManifestsHooker, project, appVariant))
@@ -264,4 +296,5 @@ class ShopPlugin implements Plugin<Project> {
             }
         }
     }
+
 }

@@ -2,6 +2,7 @@ package com.xiaomi.shop.build.gradle.plugins.hooker
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformTask
+import com.xiaomi.shop.build.gradle.plugins.Log
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
@@ -44,26 +45,40 @@ public abstract class TaskHookerManager {
 
         @Override
         void beforeExecute(Task task) {
-//            Log.i 'TaskHookerManager', "beforeExecute ${task.name} tid: ${Thread.currentThread().id} t: ${Thread.currentThread().name}"
-            if (task.project == project) {
+            Log.i 'TaskHookerManager', "beforeExecute ${task.name}" +
+                    " tid: ${Thread.currentThread().id} class: ${task.class.name}"
+//            if (task.name == "lintVitalRelease") {
+//                return
+//            }
+//            task.inputs.files.files.each {
+//                println("taskname[${task.name} --- taskclass[${task.class.name}] ----- inputfile[${it.absolutePath}]")
+//            }
+//            if (task.project == project) {
                 if (task in TransformTask) {
                     taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.beforeTaskExecute(task)
                 } else {
                     taskHookerMap[task.name]?.beforeTaskExecute(task)
                 }
-            }
+//            }
         }
 
         @Override
         void afterExecute(Task task, TaskState taskState) {
-//            Log.i 'TaskHookerManager', "afterExecute ${task.name} tid: ${Thread.currentThread().id} t: ${Thread.currentThread().name}"
-            if (task.project == project) {
+            Log.i 'TaskHookerManager', "afterExecute ${task.name} " +
+                    "tid: ${Thread.currentThread().id} class: ${task.class.name}"
+//            if (task.name == "lintVitalRelease") {
+//                return
+//            }
+//            task.outputs.files.files.each {
+//                println("taskname[${task.name} --- taskclass[${task.class.name}]----- outputfile[${it.absolutePath}]")
+//            }
+//            if (task.project == project) {
                 if (task in TransformTask) {
                     taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.afterTaskExecute(task)
                 } else {
                     taskHookerMap[task.name]?.afterTaskExecute(task)
                 }
-            }
+//            }
         }
     }
 

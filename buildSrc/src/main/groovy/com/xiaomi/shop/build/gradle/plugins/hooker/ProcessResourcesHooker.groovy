@@ -3,7 +3,8 @@ package com.xiaomi.shop.build.gradle.plugins.hooker
 import com.android.build.gradle.AndroidConfig
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApkVariant
-import com.android.build.gradle.tasks.ProcessAndroidResources
+import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
+import com.xiaomi.shop.build.gradle.plugins.Log
 import org.gradle.api.Project
 
 /**
@@ -13,7 +14,7 @@ import org.gradle.api.Project
  *
  * @author zhengtao
  */
-class ProcessResourcesHooker extends GradleTaskHooker<ProcessAndroidResources> {
+class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidResourcesTask> {
 
     /**
      * Collector to gather the sources and styleables
@@ -22,10 +23,13 @@ class ProcessResourcesHooker extends GradleTaskHooker<ProcessAndroidResources> {
      * Android config information specified in build.gradle
      */
     AndroidConfig androidConfig
+    File stable_id_lib_file
 
     ProcessResourcesHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
         androidConfig = project.extensions.findByType(AppExtension)
+
+
     }
 
     @Override
@@ -34,23 +38,34 @@ class ProcessResourcesHooker extends GradleTaskHooker<ProcessAndroidResources> {
     }
 
     @Override
-    void beforeTaskExecute(ProcessAndroidResources aaptTask) {
+    void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
+        println("hahaha projectname[$project.name] , taskname[${aaptTask.class.name}]")
+        Project libProject = project.rootProject.findProject("baselib")
+        if (libProject) {
+            stable_id_lib_file = libProject.file("stable_id_file")
+            if (!stable_id_lib_file.exists()) {
+                Log.i "ProcessResourcesHooker", "${stable_id_lib_file} not exist , generate it."
+                stable_id_lib_file.createNewFile()
+            } else {
 
-    }
-
-    /**
-     * Since we need to remove the host resources and modify the resource ID,
-     * we will reedit the AP_ file and repackage it after the task execute
-     *
-     * @param par Gradle task of process android resources
-     */
-    @Override
-    void afterTaskExecute(ProcessAndroidResources par) {
-        variantData.outputScope.getOutputs(TaskoutputHolder.TaskOutputType.PROCESSED_RES).each {
-            println("outputfile[${it.outputFile}]")
-//                repackage(par, it.outputFile)
+            }
         }
+        aaptTask.aaptOptions.additionalParameters("--emit-ids", "${stable_id_lib_file}")
     }
+/**
+ * Since we need to remove the host resources and modify the resource ID,
+ * we will reedit the AP_ file and repackage it after the task execute
+ *
+ * @param par Gradle task of process android resources
+ */
+    @Override
+    void afterTaskExecute(LinkApplicationAndroidResourcesTask task) {
+//        variantData.outputScope.getOutputs(TaskoutputHolder.TaskOutputType.PROCESSED_RES).each {
+//            println("outputfile[${it.outputFile}]")
+//                repackage(par, it.outputFile)
+//        }
+    }
+
 
 //    void repackage(ProcessAndroidResources par, File apFile) {
 //        def resourcesDir = new File(apFile.parentFile, Files.getNameWithoutExtension(apFile.name))
