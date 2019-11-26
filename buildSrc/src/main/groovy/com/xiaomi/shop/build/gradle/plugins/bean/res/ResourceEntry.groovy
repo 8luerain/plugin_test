@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull
  */
 class ResourceEntry implements Comparable{
 
+     String packageId
     /**
      * Type of a resource entry, e.g. drawable
      */
@@ -32,6 +33,10 @@ class ResourceEntry implements Comparable{
         resourceType = resType
         resourceName = resName
         resourceId = resId
+    }
+
+    void setPackageId(String packageId) {
+        this.packageId = packageId
     }
 
     public void setNewResourceId(id) {
@@ -67,7 +72,8 @@ class ResourceEntry implements Comparable{
 
     @Override
     int compareTo(@NotNull Object o) {
-        return resourceName.compareTo(o)
+        ResourceEntry that = (ResourceEntry) o
+        return resourceName.compareTo(that.resourceName)
     }
 
     boolean equals(o) {
@@ -91,6 +97,6 @@ class ResourceEntry implements Comparable{
     }
 
     String toString() {
-        return "com.example.plugintest:${resourceType}/${resourceName} = 0x${Integer.toHexString(resourceId)}"
+        return "${packageId}:${resourceType}/${resourceName} = 0x${Integer.toHexString(resourceId)}"
     }
 }

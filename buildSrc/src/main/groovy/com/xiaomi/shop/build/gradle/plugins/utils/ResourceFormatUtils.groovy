@@ -13,7 +13,7 @@ class ResourceFormatUtils {
      * 将R文件转为aapt固定资源时"--emit-id"文件格式的
      * @param rSymbolFile R.txt文件
      */
-    static void parseResEntries(File rSymbolFile, File stableIDFile) {
+    static void convertR2Stable(String applicationId, File rSymbolFile, File stableIDFile) {
         if (!rSymbolFile.exists()) {
             return
         }
@@ -28,27 +28,31 @@ class ResourceFormatUtils {
                 def resId = tokenizer.nextToken('\r\n').trim()
 
                 if (resType == 'styleable') {
-                    styleablesContainer.add(new StyleableEntry(resName, resId, valueType))
+                    StyleableEntry styleableEntry = new StyleableEntry(resName, resId, valueType);
+                    styleableEntry.setPackageId(applicationId)
+                    styleablesContainer.add(styleableEntry)
                 } else {
-                    resourcesContainer.put(resType, new ResourceEntry(resType, resName, Integer.decode(resId)))
+                    ResourceEntry resourceEntry = new ResourceEntry(resType, resName, Integer.decode(resId))
+                    resourceEntry.setPackageId(applicationId)
+                    resourcesContainer.put(resType, resourceEntry)
                 }
             }
         }
-        if (!styleablesContainer.empty) {
-            for (int index = 0; index < styleablesContainer.size() - 1; index++) {
-                StyleableEntry item = styleablesContainer.get(index)
-                if (item.valueType == 'int') {
-                    StyleableEntry arrayItem = styleablesContainer.get(index - item.valueInt() - 1)
-                    String realValue = arrayItem.convertValue2List().get(item.valueInt())
-                    resourcesContainer.put("attr",
-                            new ResourceEntry("attr", item.getStyleableItemName(), Integer.decode(realValue)))
-                }
-            }
-        }
+//        if (!styleablesContainer.empty) {
+//            for (int index = 0; index < styleablesContainer.size() - 1; index++) {
+//                StyleableEntry item = styleablesContainer.get(index)
+//                if (item.valueType == 'int') {
+//                    StyleableEntry arrayItem = styleablesContainer.get(index - item.valueInt() - 1)
+//                    String realValue = arrayItem.convertValue2List().get(item.valueInt())
+//                    resourcesContainer.put("attr",
+//                            new ResourceEntry("attr", item.getStyleableItemName(), Integer.decode(realValue)))
+//                }
+//            }
+//        }
 
 
         resourcesContainer.keySet().each { String key ->
-            println("resourcesContainer type ----- ${key}\n")
+//            println("resourcesContainer type ----- ${key}\n")
             FileUtil.appendFile(stableIDFile.getParentFile(),
                     Files.getNameWithoutExtension(stableIDFile.name),
                     true,

@@ -21,6 +21,7 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 
     StableHostResourceHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
+        apkVariant.applicationId
         mHookerDir = project.file('hooker')
         if (!mHookerDir.exists()) {
             mHookerDir.mkdir()
@@ -37,7 +38,7 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 //            mStableOutputFile.delete()
 //        }
 //        mStableOutputFile.createNewFile()
-        if (mStableInputFile) {
+        if (mStableInputFile.exists()) {
             mAndroidExtension.aaptOptions.additionalParameters("--stable-ids", "${mStableInputFile}")
         }
 //        mAndroidExtension.aaptOptions.additionalParameters("--emit-ids", "${mStableOutputFile}")
@@ -49,7 +50,7 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 //            mStableOutputFile.delete()
 //        }
 //        mStableOutputFile.createNewFile()
-        if (mStableInputFile) {
+        if (mStableInputFile.exists()) {
             task.aaptOptions.additionalParameters("--stable-ids", "${mStableInputFile}")
         }
 //        task.aaptOptions.additionalParameters("--emit-ids", "${mStableOutputFile}")
@@ -65,17 +66,18 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 
     @Override
     void afterTaskExecute(LinkApplicationAndroidResourcesTask linkAndroidResForBundleTask) {
-//        if (mStableOutputFile.exists()) {
-//            if (mStableInputFile.exists()) {
-//                mStableInputFile.delete()
-//            }
-//            project.copy {
-//                from mStableOutputFile
-//                into mStableOutputFile.getParentFile()
-//                rename { sFileInputName }
-//            }
-//            mStableOutputFile.delete()
-//        }
-        ResourceFormatUtils.parseResEntries(linkAndroidResForBundleTask.textSymbolOutputFile , mStableOutputFile)
+        if (mStableOutputFile.exists()) {
+            mStableOutputFile.delete()
+        }
+        if (mStableInputFile.exists()) {
+            mStableInputFile.delete()
+        }
+        ResourceFormatUtils.convertR2Stable(apkVariant.applicationId,linkAndroidResForBundleTask.textSymbolOutputFile, mStableOutputFile)
+        project.copy {
+            from mStableOutputFile
+            into mStableOutputFile.getParentFile()
+            rename { sFileInputName }
+        }
+        mStableOutputFile.delete()
     }
 }

@@ -12,6 +12,7 @@ package com.xiaomi.shop.build.gradle.plugins.bean.res
  */
 class StyleableEntry {
 
+    String packageId
     /**
      * Name of a styleable entry, e.g. TagLayout or TagLayout_android_gravity
      */
@@ -32,7 +33,10 @@ class StyleableEntry {
         this.valueType = valueType
     }
 
-    /**
+    void setPackageId(String packageId) {
+        this.packageId = packageId
+    }
+/**
      * e.g.
      * when value of the entry is: { 0x010100af, 0x7f0102b5, 0x7f0102b6 }* this method return [0x010100af, 0x7f0102b5, 0x7f0102b6]
      *
@@ -110,6 +114,6 @@ class StyleableEntry {
 
     @Override
     String toString() {
-        return "com.example.plugintest:${valueType}/${name} = ${value}"
+        return "${packageId}:${valueType}/${name} = ${value}"
     }
 }
