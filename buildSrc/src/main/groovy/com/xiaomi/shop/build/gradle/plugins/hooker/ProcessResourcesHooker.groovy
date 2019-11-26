@@ -6,7 +6,6 @@ import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.xiaomi.shop.build.gradle.plugins.Log
 import org.gradle.api.Project
-
 /**
  * Filter the host resources out of the plugin apk.
  * Modify the .arsc file to delete host element,
@@ -39,10 +38,10 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
-        println("hahaha projectname[$project.name] , taskname[${aaptTask.class.name}]")
+        println("hahaha projectname[$project.name] , taskname[${aaptTask.name}], taskclass[${aaptTask.class.name}]")
         Project libProject = project.rootProject.findProject("baselib")
         if (libProject) {
-            stable_id_lib_file = libProject.file("stable_id_file")
+            stable_id_lib_file = libProject.file("stable_id_file.txt")
             if (!stable_id_lib_file.exists()) {
                 Log.i "ProcessResourcesHooker", "${stable_id_lib_file} not exist , generate it."
                 stable_id_lib_file.createNewFile()
@@ -50,7 +49,10 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
 
             }
         }
-        aaptTask.aaptOptions.additionalParameters("--emit-ids", "${stable_id_lib_file}")
+        AppExtension extension = project.getExtensions().findByType(AppExtension.class)
+        extension.aaptOptions.additionalParameters("--emit-ids", "${stable_id_lib_file.absolutePath}")
+//        println("is aatp2 enable[${aaptTask.aaptOptions}]")
+//        aaptTask.getAaptOptionsInput().additionalParameters("--emit-ids", "${stable_id_lib_file.absolutePath}")
     }
 /**
  * Since we need to remove the host resources and modify the resource ID,
@@ -60,6 +62,8 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
  */
     @Override
     void afterTaskExecute(LinkApplicationAndroidResourcesTask task) {
+//                println("is aatp2 enable[${task.aaptOptions}]")
+
 //        variantData.outputScope.getOutputs(TaskoutputHolder.TaskOutputType.PROCESSED_RES).each {
 //            println("outputfile[${it.outputFile}]")
 //                repackage(par, it.outputFile)

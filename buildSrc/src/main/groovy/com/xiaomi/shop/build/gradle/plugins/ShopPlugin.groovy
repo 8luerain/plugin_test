@@ -10,6 +10,7 @@ import com.android.builder.model.Dependencies
 import com.android.builder.model.SyncIssue
 import com.google.common.collect.ImmutableMap
 import com.xiaomi.shop.build.gradle.plugins.hooker.GenerateLibraryRFileHooker
+import com.xiaomi.shop.build.gradle.plugins.hooker.ProcessResourcesHooker
 import com.xiaomi.shop.build.gradle.plugins.hooker.TaskHookerManager
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -215,8 +216,10 @@ class ShopPlugin implements Plugin<Project> {
 
      void initialConfig(Project project) {
          project.getExtensions().add("pluginconfig" , PluginConfigExtension)
-         VATaskHookerManager manager = new VATaskHookerManager(project, instantiator)
-         manager.registerTaskHookers()
+         project.afterEvaluate {
+             VATaskHookerManager manager = new VATaskHookerManager(project, instantiator)
+             manager.registerTaskHookers()
+         }
     }
 
     private void collectLibraryDependencies(Project libProject) {
@@ -284,7 +287,7 @@ class ShopPlugin implements Plugin<Project> {
                     return
                 }
                 println("susscee registerTaskHookers")
-//                registerTaskHooker(instantiator.newInstance(ProcessResourcesHooker, project, appVariant))
+                registerTaskHooker(instantiator.newInstance(ProcessResourcesHooker, project, appVariant))
                 registerTaskHooker(instantiator.newInstance(GenerateLibraryRFileHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(PrepareDependenciesHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(MergeAssetsHooker, project, appVariant))
