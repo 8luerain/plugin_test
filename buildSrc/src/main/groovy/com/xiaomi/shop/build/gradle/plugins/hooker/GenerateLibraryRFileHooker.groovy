@@ -2,7 +2,7 @@ package com.xiaomi.shop.build.gradle.plugins.hooker
 
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.GenerateLibraryRFileTask
-import com.xiaomi.shop.build.gradle.plugins.PluginConfigExtension
+import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.Project
 
 class GenerateLibraryRFileHooker extends GradleTaskHooker<GenerateLibraryRFileTask> {
