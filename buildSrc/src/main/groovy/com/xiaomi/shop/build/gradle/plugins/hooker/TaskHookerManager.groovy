@@ -2,7 +2,7 @@ package com.xiaomi.shop.build.gradle.plugins.hooker
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformTask
-import com.xiaomi.shop.build.gradle.plugins.Log
+import com.xiaomi.shop.build.gradle.plugins.utils.Log
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener

@@ -1,4 +1,4 @@
-package com.xiaomi.shop.build.gradle.plugins
+package com.xiaomi.shop.build.gradle.plugins.utils
 
 class Log {
     static void i(String tag, String msg) {

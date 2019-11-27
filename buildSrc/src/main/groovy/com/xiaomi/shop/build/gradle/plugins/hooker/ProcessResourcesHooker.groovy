@@ -4,7 +4,7 @@ import com.android.build.gradle.AndroidConfig
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
-import com.xiaomi.shop.build.gradle.plugins.Log
+import com.xiaomi.shop.build.gradle.plugins.utils.Log
 import org.gradle.api.Project
 /**
  * Filter the host resources out of the plugin apk.
