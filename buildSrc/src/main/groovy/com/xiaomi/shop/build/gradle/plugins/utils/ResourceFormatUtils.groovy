@@ -13,7 +13,7 @@ class ResourceFormatUtils {
      * 将R文件转为aapt固定资源时"--emit-id"文件格式的
      * @param rSymbolFile R.txt文件
      */
-    static void convertR2Stable(String applicationId, File rSymbolFile, File stableIDFile) {
+    static void convertRFile2Stable(String applicationId, File rSymbolFile, File stableIDFile) {
         if (!rSymbolFile.exists()) {
             return
         }
@@ -61,5 +61,31 @@ class ResourceFormatUtils {
 //                println(value)
 //            }
         }
+    }
+    /**
+     * 将R文件转为实体类
+     * @param rSymbolFile R.txt文件
+     */
+    static ListMultimap convertR2ResourceMap(File RSymbolFile) {
+        if (!RSymbolFile.exists()) {
+            return
+        }
+        ListMultimap<String, ResourceEntry> resourcesMap = ArrayListMultimap.create()
+        RSymbolFile.eachLine { line ->
+            /**
+             *  Line Content:
+             *  Common Res:  int string abc_action_bar_home_description 0x7f090000
+             *  Styleable:   int[] styleable TagLayout { 0x010100af, 0x7f0102b5, 0x7f0102b6 }*            or int styleable TagLayout_android_gravity 0
+             */
+            if (!line.empty) {
+                def tokenizer = new StringTokenizer(line)
+                def valueType = tokenizer.nextToken()     // value type (int or int[])
+                def resType = tokenizer.nextToken()      // resource type (attr/string/color etc.)
+                def resName = tokenizer.nextToken()
+                def resId = tokenizer.nextToken('\r\n').trim()
+                resourcesMap.put(resType, new ResourceEntry(resType, resName, Integer.decode(resId)))
+            }
+        }
+        return resourcesMap
     }
 }

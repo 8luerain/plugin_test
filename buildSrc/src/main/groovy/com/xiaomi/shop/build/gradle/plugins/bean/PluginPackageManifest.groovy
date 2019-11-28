@@ -6,17 +6,21 @@ import com.google.common.collect.Lists
 import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
 import com.xiaomi.shop.build.gradle.plugins.bean.res.StyleableEntry
 
-class HostPackageManifest {
+class PluginPackageManifest {
     File dependenciesFile
     File originalResourceFile
     ListMultimap<String, ResourceEntry> resourcesMap
     List<StyleableEntry> styleablesList = Lists.newArrayList()
+    //process资源后，文件输出文件夹
+    File resourceOutputFileDir
+    //process资源后，source输出文件夹
+    File sourceOutputFileDir
 
-    private Map hostDependenciesMap
+    private Map pluginDependenciesMap
 
     Map getHostDependenciesMap() {
-        if (hostDependenciesMap == null) {
-            hostDependenciesMap = [] as LinkedHashMap
+        if (pluginDependenciesMap == null) {
+            pluginDependenciesMap = [] as LinkedHashMap
             dependenciesFile.splitEachLine('\\s+', { columns ->
                 String id = columns[0]
                 def module = [group: 'unspecified', name: 'unspecified', version: 'unspecified']
@@ -37,7 +41,7 @@ class HostPackageManifest {
                 hostDependenciesMap.put("${module.group}:${module.name}", module)
             })
         }
-        return hostDependenciesMap
+        return pluginDependenciesMap
     }
 
     ListMultimap<String, ResourceEntry> getResourcesMap() {
@@ -49,5 +53,13 @@ class HostPackageManifest {
 
     List<StyleableEntry> getStyleablesList() {
         return styleablesList
+    }
+
+    File getResourceOutputFileDir() {
+        return resourceOutputFileDir
+    }
+
+    void setResourceOutputFileDir(File resourceOutputFileDir) {
+        this.resourceOutputFileDir = resourceOutputFileDir
     }
 }

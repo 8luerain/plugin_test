@@ -4,6 +4,7 @@ import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.api.ApplicationVariantImpl
 import com.android.build.gradle.internal.scope.VariantScope
 import com.android.build.gradle.internal.variant.BaseVariantData
+import com.xiaomi.shop.build.gradle.plugins.hooker.manager.TaskHookerManager
 import org.gradle.api.Project
 import org.gradle.api.Task
 /**

@@ -2,6 +2,7 @@ package com.xiaomi.shop.build.gradle.plugins.utils
 
 
 import com.xiaomi.shop.build.gradle.plugins.bean.HostPackageManifest
+import com.xiaomi.shop.build.gradle.plugins.bean.PluginPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
@@ -10,18 +11,22 @@ import org.gradle.api.Project
  * 汇总处理host和工程中各个plugin和lib的数据中心，通信中心
  *
  * */
-class ProjectDataBridge {
-    boolean hasParse
-    static sInstance;
-    HostPackageManifest hostPackageManifest
+class ProjectDataCenter {
+    static sInstance
+
     private Project mProject
     private PluginConfigExtension mPluginConfigExtension
+    HostPackageManifest hostPackageManifest
+    PluginPackageManifest pluginPackageManifest
 
-    static ProjectDataBridge getInstance(Project project) {
+    boolean hasParse
+
+
+    static ProjectDataCenter getInstance(Project project) {
         if (null == sInstance) {
-            synchronized (ProjectDataBridge.class) {
+            synchronized (ProjectDataCenter.class) {
                 if (null == sInstance) {
-                    sInstance = new ProjectDataBridge(project)
+                    sInstance = new ProjectDataCenter(project)
                 }
             }
         }
@@ -32,7 +37,11 @@ class ProjectDataBridge {
         return hostPackageManifest
     }
 
-    ProjectDataBridge(Project project) {
+    PluginPackageManifest getPluginPackageManifest() {
+        return pluginPackageManifest
+    }
+
+    ProjectDataCenter(Project project) {
         mProject = project
         mPluginConfigExtension = mProject.pluginconfig;
         initHostManifest()

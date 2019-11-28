@@ -72,7 +72,7 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
         if (mStableInputFile.exists()) {
             mStableInputFile.delete()
         }
-        ResourceFormatUtils.convertR2Stable(apkVariant.applicationId,linkAndroidResForBundleTask.textSymbolOutputFile, mStableOutputFile)
+        ResourceFormatUtils.convertRFile2Stable(apkVariant.applicationId,linkAndroidResForBundleTask.textSymbolOutputFile, mStableOutputFile)
         project.copy {
             from mStableOutputFile
             into mStableOutputFile.getParentFile()

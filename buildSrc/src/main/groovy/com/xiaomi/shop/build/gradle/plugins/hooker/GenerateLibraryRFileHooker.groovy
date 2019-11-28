@@ -12,7 +12,7 @@ class GenerateLibraryRFileHooker extends GradleTaskHooker<GenerateLibraryRFileTa
 
     GenerateLibraryRFileHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
-        PluginConfigExtension pluginConfigExtension = project.getExtensions().getByName("pluginconfig")
+        PluginConfigExtension pluginConfigExtension = project.getExtensions().getByName("pluginConfig")
         if (pluginConfigExtension) {
             mLibraryName = pluginConfigExtension.libraryName
         }

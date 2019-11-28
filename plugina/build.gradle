@@ -23,7 +23,7 @@ android {
         }
     }
 
-    aaptOptions{
+    aaptOptions {
         File stable_id_file = project.file('stable_id_file.txt')
         if (stable_id_file.exists()) {
             additionalParameters "--emit-ids", "${project.file('stable_id_file.txt').absolutePath}"
@@ -35,13 +35,15 @@ android {
 
 }
 
-pluginconfig{
+pluginconfig {
     libraryName 'baselib'
     hostPath '../app'
+    useHostDependencies true
 
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    api project(path: ':baselib')
+    implementation("com.squareup.okhttp3:okhttp:4.2.1")
+    implementation project(path: ':baselib')
 }

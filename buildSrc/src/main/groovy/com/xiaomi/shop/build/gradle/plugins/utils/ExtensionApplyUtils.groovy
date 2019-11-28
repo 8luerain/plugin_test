@@ -15,8 +15,8 @@ class ExtensionApplyUtils {
                 p.configurations.all { Configuration configuration ->
                     configuration.resolutionStrategy { ResolutionStrategy resolutionStrategy ->
                         resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-                            PluginConfigExtension pluginConfigExtension = ProjectDataBridge.getInstance(project).pluginConfigExtension
-                            def hostDependency = ProjectDataBridge.getInstance(project).hostPackageManifest
+                            PluginConfigExtension pluginConfigExtension = ProjectDataCenter.getInstance(project).pluginConfigExtension
+                            def hostDependency = ProjectDataCenter.getInstance(project).hostPackageManifest
                                     .hostDependenciesMap.get("${details.requested.group}:${details.requested.name}")
                             if (hostDependency != null) {
                                 if ("${details.requested.version}" != "${hostDependency['version']}") {
@@ -26,8 +26,6 @@ class ExtensionApplyUtils {
                                         if (pluginConfigExtension.useHostDependencies) {
                                             Log.i 'Dependencies', "ATTENTION: Replaced module [${details.requested}] in project(:${p.name})'s configuration to host version: [${hostDependency['version']}]!"
                                         } else {
-//                                        pluginConfigExtension.addWarning "WARNING: [${details.requested}] in project(:${p.name})'s configuration will be occupied by Host App! Please change it to host version: [${hostDependency['group']}:${hostDependency['name']}:${hostDependency['version']}]."
-//                                        pluginConfigExtension.addWarning "WARNING: [${details.requested}] in project(:${p.name})'s configuration will be occupied by Host App! Please change it to host version: [${hostDependency['group']}:${hostDependency['name']}:${hostDependency['version']}]."
 //                                        virtualApk.setFlag('tip.forceUseHostDependences', true)
                                             Log.i 'Dependencies', "WARNING: [${details.requested}] in project(:${p.name})'s configuration will be occupied by Host App! Please change it to host version: [${hostDependency['group']}:${hostDependency['name']}:${hostDependency['version']}]."
                                         }
@@ -43,7 +41,6 @@ class ExtensionApplyUtils {
                 }
             }
         }
-
 
     }
 }

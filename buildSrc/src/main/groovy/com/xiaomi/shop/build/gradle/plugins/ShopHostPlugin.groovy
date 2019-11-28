@@ -5,10 +5,11 @@ import com.android.build.gradle.internal.ide.dependencies.BuildMappingUtils
 import com.android.build.gradle.tasks.ProcessAndroidResources
 import com.android.builder.model.AndroidLibrary
 import com.android.builder.model.Dependencies
+import com.android.builder.model.JavaLibrary
 import com.android.builder.model.SyncIssue
 import com.google.common.collect.ImmutableMap
 import com.xiaomi.shop.build.gradle.plugins.hooker.StableHostResourceHooker
-import com.xiaomi.shop.build.gradle.plugins.hooker.TaskHookerManager
+import com.xiaomi.shop.build.gradle.plugins.hooker.manager.TaskHookerManager
 import com.xiaomi.shop.build.gradle.plugins.utils.CommonFactory
 import com.xiaomi.shop.build.gradle.plugins.utils.FileUtil
 import org.gradle.api.Plugin
@@ -87,7 +88,9 @@ class ShopHostPlugin implements Plugin<Project> {
                             false, buildMapping, consumer)
 
 
-            dependencies.getJavaLibraries()
+            dependencies.getJavaLibraries().each { JavaLibrary library ->
+                deps.add(library.name)
+            }
             dependencies.getLibraries().each { AndroidLibrary library ->
 //                println(" dependencies.getLibraries()[${library.name}]")
                 deps.add(library.name)
