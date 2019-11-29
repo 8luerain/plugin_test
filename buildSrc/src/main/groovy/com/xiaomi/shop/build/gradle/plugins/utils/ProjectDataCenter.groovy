@@ -1,8 +1,6 @@
 package com.xiaomi.shop.build.gradle.plugins.utils
 
-
-import com.xiaomi.shop.build.gradle.plugins.bean.HostPackageManifest
-import com.xiaomi.shop.build.gradle.plugins.bean.PluginPackageManifest
+import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
@@ -16,8 +14,12 @@ class ProjectDataCenter {
 
     private Project mProject
     private PluginConfigExtension mPluginConfigExtension
-    HostPackageManifest hostPackageManifest
-    PluginPackageManifest pluginPackageManifest
+
+    PackageManifest hostPackageManifest
+    PackageManifest pluginPackageManifest
+
+    //过滤资源后，需要重新打包的资源清单
+    PackageManifest rePackageManifest
 
     boolean hasParse
 
@@ -33,19 +35,20 @@ class ProjectDataCenter {
         return sInstance;
     }
 
-    HostPackageManifest getHostPackageManifest() {
-        return hostPackageManifest
-    }
-
-    PluginPackageManifest getPluginPackageManifest() {
-        return pluginPackageManifest
-    }
-
     ProjectDataCenter(Project project) {
         mProject = project
         mPluginConfigExtension = mProject.pluginconfig;
         initHostManifest()
     }
+
+    PackageManifest getHostPackageManifest() {
+        return hostPackageManifest
+    }
+
+    PackageManifest getPluginPackageManifest() {
+        return pluginPackageManifest
+    }
+
 
     PluginConfigExtension getPluginConfigExtension() {
         return mPluginConfigExtension
@@ -77,9 +80,39 @@ class ProjectDataCenter {
             def err = new StringBuilder("Can't find ${hostVersions.canonicalPath}, please check up your host application\n")
             throw new InvalidUserDataException(err.toString())
         }
-        hostPackageManifest = new HostPackageManifest()
+        hostPackageManifest = new PackageManifest()
         hostPackageManifest.dependenciesFile = hostVersions
         hostPackageManifest.originalResourceFile = hostR
 
+    }
+
+    def createRePackageManifest() {
+        if (null == rePackageManifest) {
+            rePackageManifest = new PackageManifest()
+        }
+        def pluginResource = pluginPackageManifest.resourcesMap
+        def hostResources = hostPackageManifest.resourcesMap
+        pluginResource.values().each {
+            def index = hostResources.get(it.resourceType).indexOf(it)
+            if (index >= 0) {
+//                it.newResourceId = hostResources.get(it.resourceType).get(index).resourceId
+//                hostResources.get(it.resourceType).set(index, it)
+            } else {
+                pluginResource.put(it.resourceType, it)
+            }
+        }
+
+        allStyleables.each {
+            def index = hostStyleables.indexOf(it)
+            if (index >= 0) {
+                /**
+                 * Do not support the same name but different content styleable entry
+                 */
+                it.value = hostStyleables.get(index).value
+                hostStyleables.set(index, it)
+            } else {
+                pluginStyleables.add(it)
+            }
+        }
     }
 }

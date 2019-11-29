@@ -2,6 +2,7 @@ package com.xiaomi.shop.build.gradle.plugins
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
+import com.android.build.gradle.internal.api.ApplicationVariantImpl
 import com.android.build.gradle.internal.variant.VariantFactory
 import com.xiaomi.shop.build.gradle.plugins.base.ShopBasePlugin
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
@@ -20,24 +21,27 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
 class ShopPlugin extends ShopBasePlugin {
-    Project mProject
+
     AppPlugin mAppPlugin
     AppExtension mAndroidExtension
-    Instantiator mInstantiator
 
     @Inject
     ShopPlugin(Instantiator instantiator, ToolingModelBuilderRegistry registry) {
         super(instantiator, registry)
-        mInstantiator = instantiator
     }
 
     @Override
     void apply(Project project) {
-        mProject = project
+        super.apply(project)
         mAppPlugin = project.plugins.findPlugin(AppPlugin)
         mAndroidExtension = project.getExtensions().findByType(AppExtension)
+        injectBaseExtension(project)
         modifyAndroidExtension()
         initialConfig(project)
+    }
+
+    def injectBaseExtension(Project project) {
+        project.getExtensions().add("pluginconfig", PluginConfigExtension)
     }
 
     //生命周期「解析variant之前」,可以修改一些build.gradle原定的配置
@@ -67,16 +71,14 @@ class ShopPlugin extends ShopBasePlugin {
     }
 
     void initialConfig(Project project) {
-        injectBaseExtension(project)
-
         project.afterEvaluate {
+            mProject.android.applicationVariants.each { ApplicationVariantImpl variant ->
+                generateDependencies(variant)
+            }
             PluginHookerManager manager = new PluginHookerManager(project, mInstantiator)
             manager.registerTaskHookers()
         }
     }
 
-    def injectBaseExtension(Project project) {
-        project.getExtensions().add("pluginconfig", PluginConfigExtension)
-    }
 
 }

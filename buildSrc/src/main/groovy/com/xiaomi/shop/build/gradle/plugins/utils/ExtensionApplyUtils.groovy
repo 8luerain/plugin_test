@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.ResolutionStrategy
 
 class ExtensionApplyUtils {
 
+    //检查是否强制使用host的依赖文件版本
     static void applyUseHostResourceConfig(Project project) {
         HashSet<String> replacedSet = [] as HashSet
         project.rootProject.subprojects { Project p ->

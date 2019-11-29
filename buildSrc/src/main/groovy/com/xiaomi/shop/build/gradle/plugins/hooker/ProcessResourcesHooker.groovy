@@ -4,17 +4,10 @@ import com.android.build.gradle.AndroidConfig
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
-import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
 import org.gradle.api.Project
 
 class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidResourcesTask> {
 
-    /**
-     * Collector to gather the sources and styleables
-     */
-    /**
-     * Android config information specified in build.gradle
-     */
     AndroidConfig androidConfig
     File stable_id_lib_file
 
@@ -48,38 +41,23 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
 //        println("is aatp2 enable[${aaptTask.aaptOptions}]")
 //        aaptTask.getAaptOptionsInput().additionalParameters("--emit-ids", "${stable_id_lib_file.absolutePath}")
     }
-    /**
-     * Since we need to remove the host resources and modify the resource ID,
-     * we will reedit the AP_ file and repackage it after the task execute
-     *
-     * @param par Gradle task of process android resources
-     */
+
+
     @Override
     void afterTaskExecute(LinkApplicationAndroidResourcesTask task) {
 //        ProjectDataCenter.getInstance(project).pluginPackageManifest.resourceOutputFileDir = task
 //        variantData.outputScope.getOutputs(TaskOutputHolder.TaskOutputType.PROCESSED_RES).each {
 //            repackage(par, it.outputFile)
 //        }
-        ProjectDataCenter.getInstance(project).pluginPackageManifest.resourceOutputFileDir = task.resPackageOutputFolder;
-        ProjectDataCenter.getInstance(project).pluginPackageManifest.originalResourceFile = task.textSymbolOutputFile;
+
+//        ProjectDataCenter.getInstance(project).pluginPackageManifest.originalResourceFile = task.textSymbolOutputFile
+//        ProjectDataCenter.getInstance(project).pluginPackageManifest.resourceOutputFileDir = task.resPackageOutputFolder
+//        ProjectDataCenter.getInstance(project).pluginPackageManifest.sourceOutputFileDir = task.sourceOutputDir
 
 
         println("res dir [${task.sourceOutputDir}]  source output dir[${task.resPackageOutputFolder}]")
     }
 
 
-    /**
-     * Parse the type part of a android resource id
-     */
-    def parseTypeIdFromResId(int resourceId) {
-        resourceId >> 16 & 0xFF
-    }
-
-    /**
-     * Parse the entry part of a android resource id
-     */
-    def parseEntryIdFromResId(int resourceId) {
-        resourceId & 0xFFFF
-    }
 
 }
