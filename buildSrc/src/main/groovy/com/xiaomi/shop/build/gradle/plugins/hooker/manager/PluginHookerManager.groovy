@@ -19,7 +19,7 @@ class PluginHookerManager extends TaskHookerManager {
             if (!appVariant.buildType.name.equalsIgnoreCase("release")) {
                 return
             }
-            registerTaskHooker(instantiator.newInstance(ProcessResourcesHooker, project, appVariant))
+            registerTaskHooker(instantiator.newInstance(ProcessResourcesHooker, mProject, appVariant))
 //            registerTaskHooker(instantiator.newInstance(GenerateLibraryRFileHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(PrepareDependenciesHooker, project, appVariant))
 //                registerTaskHooker(instantiator.newInstance(MergeAssetsHooker, project, appVariant))

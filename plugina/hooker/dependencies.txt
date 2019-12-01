@@ -36,7 +36,6 @@ androidx.vectordrawable:vectordrawable-animated:1.1.0@aar
 androidx.vectordrawable:vectordrawable:1.1.0@aar
 androidx.versionedparcelable:versionedparcelable:1.1.0@aar
 androidx.viewpager:viewpager:1.0.0@aar
-artifacts::annoatationlib:unspecified@jar
 artifacts::baselib:unspecified@jar
 com.google.android.material:material:1.0.0@aar
 com.squareup.okhttp3:okhttp:4.2.2@jar

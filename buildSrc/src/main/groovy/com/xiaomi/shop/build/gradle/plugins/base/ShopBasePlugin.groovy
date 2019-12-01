@@ -22,6 +22,7 @@ class ShopBasePlugin implements Plugin<Project> {
 
     Project mProject
     File mHookerDir
+    File aaptResourceDir
     Instantiator mInstantiator
 
     @Inject
@@ -40,6 +41,12 @@ class ShopBasePlugin implements Plugin<Project> {
         if (!mHookerDir.exists()) {
             mHookerDir.mkdir()
         }
+        aaptResourceDir = new File([mHookerDir, "intermediates", "aapt"].join(File.separator))
+        if (aaptResourceDir.exists()) {
+            aaptResourceDir.delete()
+        }
+        aaptResourceDir.mkdir()
+
         project.afterEvaluate {
             project.android.applicationVariants.each { ApplicationVariantImpl variant ->
                 generateDependencies(variant)
@@ -92,4 +99,19 @@ class ShopBasePlugin implements Plugin<Project> {
         }
     }
 
+    Project getProject() {
+        return mProject
+    }
+
+    File getHookerDir() {
+        return mHookerDir
+    }
+
+    File getAaptResourceDir() {
+        return aaptResourceDir
+    }
+
+    Instantiator getInstantiator() {
+        return mInstantiator
+    }
 }

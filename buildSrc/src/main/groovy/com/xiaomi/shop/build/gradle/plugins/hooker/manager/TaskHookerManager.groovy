@@ -3,31 +3,25 @@ package com.xiaomi.shop.build.gradle.plugins.hooker.manager
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformTask
 import com.xiaomi.shop.build.gradle.plugins.hooker.GradleTaskHooker
-import com.xiaomi.shop.build.gradle.plugins.utils.Log
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
 import org.gradle.internal.reflect.Instantiator
 
-/**
- * Manager of hookers, responsible for registration and scheduling execution
- *
- * @author zhengtao
- */
 public abstract class TaskHookerManager {
 
     protected Map<String, GradleTaskHooker> taskHookerMap = new HashMap<>()
 
-    protected Project project
+    protected Project mProject
     protected AppExtension android
     protected Instantiator instantiator
 
-    public TaskHookerManager(Project project, Instantiator instantiator) {
-        this.project = project
+    public TaskHookerManager(Project mProject, Instantiator instantiator) {
+        this.mProject = mProject
         this.instantiator = instantiator
-        android = project.extensions.findByType(AppExtension)
-        project.gradle.addListener(new VirtualApkTaskListener())
+        android = mProject.extensions.findByType(AppExtension)
+        mProject.gradle.addListener(new VirtualApkTaskListener())
     }
 
     public abstract void registerTaskHookers()
@@ -42,44 +36,52 @@ public abstract class TaskHookerManager {
         return taskHookerMap[taskName] as T
     }
 
+
     private class VirtualApkTaskListener implements TaskExecutionListener {
 
         @Override
         void beforeExecute(Task task) {
-            Log.i 'TaskHookerManager', "beforeExecute ${task.name}" +
-                    " tid: ${Thread.currentThread().id} class: ${task.class.name}"
-//            if (task.name == "lintVitalRelease") {
-//                return
-//            }
-//            task.inputs.files.files.each {
-//                println("taskname[${task.name} --- taskclass[${task.class.name}] ----- inputfile[${it.absolutePath}]")
-//            }
 //            if (task.project == project) {
-                if (task in TransformTask) {
-                    taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.beforeTaskExecute(task)
-                } else {
-                    taskHookerMap[task.name]?.beforeTaskExecute(task)
-                }
+            if (task in TransformTask) {
+                taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.beforeTaskExecute(task)
+            } else {
+                taskHookerMap[task.name]?.beforeTaskExecute(task)
+            }
 //            }
         }
 
         @Override
         void afterExecute(Task task, TaskState taskState) {
-            Log.i 'TaskHookerManager', "afterExecute ${task.name} " +
-                    "tid: ${Thread.currentThread().id} class: ${task.class.name}"
-//            if (task.name == "lintVitalRelease") {
-//                return
-//            }
-//            task.outputs.files.files.each {
-//                println("taskname[${task.name} --- taskclass[${task.class.name}]----- outputfile[${it.absolutePath}]")
-//            }
+
 //            if (task.project == project) {
-                if (task in TransformTask) {
-                    taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.afterTaskExecute(task)
-                } else {
-                    taskHookerMap[task.name]?.afterTaskExecute(task)
-                }
+            if (task in TransformTask) {
+                taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.afterTaskExecute(task)
+            } else {
+                taskHookerMap[task.name]?.afterTaskExecute(task)
+            }
 //            }
+//            recordInputAndOutput(task)
+        }
+
+        void recordInputAndOutput(Task task) {
+            if (task.name == "lintVitalRelease") {
+                return
+            }
+            println("task_name[${task.name} --- task_class[${task.class.name}]\n")
+            ArrayList<String> record = new ArrayList<>()
+            task.inputs.files.files.each {
+                record.add("[input_path]:[${it.absolutePath}]")
+            }
+            task.outputs.files.files.each {
+                record.add("[output_path]:[${it.absolutePath}]")
+            }
+            record.each {
+                println(it)
+            }
+//            FileUtil.saveFile(mProject.getRootDir(), "allTaskInputAndOutput",
+//                    {
+//                        return record
+//                    })
         }
     }
 

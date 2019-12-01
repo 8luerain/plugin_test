@@ -46,6 +46,9 @@ class ProjectDataCenter {
     }
 
     PackageManifest getPluginPackageManifest() {
+        if (null == pluginPackageManifest) {
+            pluginPackageManifest = new PackageManifest()
+        }
         return pluginPackageManifest
     }
 
