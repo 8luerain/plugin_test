@@ -1,6 +1,10 @@
 package com.xiaomi.shop.build.gradle.plugins.utils
 
+import com.google.common.collect.ListMultimap
+import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
+import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
+import com.xiaomi.shop.build.gradle.plugins.bean.res.StyleableEntry
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
@@ -15,13 +19,12 @@ class ProjectDataCenter {
     private Project mProject
     private PluginConfigExtension mPluginConfigExtension
 
-    PackageManifest hostPackageManifest
-    PackageManifest pluginPackageManifest
+    private PackageManifest hostPackageManifest
+    private PackageManifest pluginPackageManifest
+    private MergedPackageManifest mergedPluginPackageManifest
 
-    //过滤资源后，需要重新打包的资源清单
-    PackageManifest rePackageManifest
 
-    boolean hasParse
+    private boolean hasParse
 
 
     static ProjectDataCenter getInstance(Project project) {
@@ -38,10 +41,13 @@ class ProjectDataCenter {
     ProjectDataCenter(Project project) {
         mProject = project
         mPluginConfigExtension = mProject.pluginconfig;
-        initHostManifest()
     }
 
     PackageManifest getHostPackageManifest() {
+        if (null == pluginPackageManifest) {
+            hostPackageManifest = new PackageManifest()
+            initHostManifest()
+        }
         return hostPackageManifest
     }
 
@@ -50,6 +56,19 @@ class ProjectDataCenter {
             pluginPackageManifest = new PackageManifest()
         }
         return pluginPackageManifest
+    }
+
+    MergedPackageManifest getMergedPluginPackageManifest() {
+        if (!PackageManifestUtils.hasAaptProcessed(hostPackageManifest)) {
+            throw new IllegalArgumentException("宿主资源初始化失败")
+        }
+        if (!PackageManifestUtils.hasAaptProcessed(pluginPackageManifest)) {
+            throw new IllegalArgumentException("插件资源初始化失败")
+        }
+        if (null == mergedPluginPackageManifest) {
+            mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest)
+        }
+        return mergedPluginPackageManifest
     }
 
 
@@ -83,39 +102,9 @@ class ProjectDataCenter {
             def err = new StringBuilder("Can't find ${hostVersions.canonicalPath}, please check up your host application\n")
             throw new InvalidUserDataException(err.toString())
         }
-        hostPackageManifest = new PackageManifest()
         hostPackageManifest.dependenciesFile = hostVersions
         hostPackageManifest.originalResourceFile = hostR
-
     }
 
-    def createRePackageManifest() {
-        if (null == rePackageManifest) {
-            rePackageManifest = new PackageManifest()
-        }
-        def pluginResource = pluginPackageManifest.resourcesMap
-        def hostResources = hostPackageManifest.resourcesMap
-        pluginResource.values().each {
-            def index = hostResources.get(it.resourceType).indexOf(it)
-            if (index >= 0) {
-//                it.newResourceId = hostResources.get(it.resourceType).get(index).resourceId
-//                hostResources.get(it.resourceType).set(index, it)
-            } else {
-                pluginResource.put(it.resourceType, it)
-            }
-        }
 
-        allStyleables.each {
-            def index = hostStyleables.indexOf(it)
-            if (index >= 0) {
-                /**
-                 * Do not support the same name but different content styleable entry
-                 */
-                it.value = hostStyleables.get(index).value
-                hostStyleables.set(index, it)
-            } else {
-                pluginStyleables.add(it)
-            }
-        }
-    }
 }

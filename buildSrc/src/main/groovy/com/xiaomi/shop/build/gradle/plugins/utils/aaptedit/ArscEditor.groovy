@@ -4,6 +4,9 @@ package com.xiaomi.shop.build.gradle.plugins.utils.aaptedit
  * Class to edit aapt-generated resources.arsc file
  */
 public class ArscEditor extends AssetEditor {
+    public static final int ID_DELETED = -1
+    public static final int ID_NO_ATTR = -2
+
     /*      Arsc struct
      *  +-----------------------+
      *  | Table Header          |
@@ -63,7 +66,7 @@ public class ArscEditor extends AssetEditor {
         }
 
         // Ensure there is an `attr' typeSpec
-        if (retainedTypes[0].id == Aapt.ID_NO_ATTR) { // attr type id is always at first
+        if (retainedTypes[0].id ==ID_NO_ATTR) { // attr type id is always at first
             def attrSpec = t.typeList.specs[0]
             attrSpec.entryCount = 0
             attrSpec.configs = []
@@ -87,12 +90,12 @@ public class ArscEditor extends AssetEditor {
 
         // Filter typeSpecs
         retainedTypes.each {
-            if (it.id == Aapt.ID_DELETED) {
+            if (it.id == ID_DELETED) {
                 // TODO: Add empty entry to default config
                 throw new UnsupportedOperationException("No support deleting resources on lib.* now")
             }
 
-            if (it.id == Aapt.ID_NO_ATTR) {
+            if (it.id == ID_NO_ATTR) {
                 return
             }
 
@@ -105,7 +108,7 @@ public class ArscEditor extends AssetEditor {
             // Filter flags
             def flags = []
             es.each { e ->
-                def flag = (e.id == Aapt.ID_DELETED) ? 0 : ts.flags[e.id]
+                def flag = (e.id == ID_DELETED) ? 0 : ts.flags[e.id]
                 flags.add(flag)
             }
             ts.flags = flags
@@ -119,7 +122,7 @@ public class ArscEditor extends AssetEditor {
                 int offset = 0
                 def emptyCount = 0
                 es.each { e ->
-                    if (e.id == Aapt.ID_DELETED) {
+                    if (e.id == ID_DELETED) {
                         // TODO: Add empty entry to default config
                         throw new UnsupportedOperationException("No support deleting resources on lib.* now")
                     }

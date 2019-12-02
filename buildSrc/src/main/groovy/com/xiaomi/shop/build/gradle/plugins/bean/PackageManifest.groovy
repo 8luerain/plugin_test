@@ -11,14 +11,14 @@ class PackageManifest {
     //处理后的依赖文件，记录依赖库及版本等
     File dependenciesFile
     //依赖库内存化
-    private Map hostDependenciesMap
+    Map hostDependenciesMap
 
     //processResource后， 原始的R文件
     File originalResourceFile
     //处理R文件后生成的资源map
-    ListMultimap<String, ResourceEntry> resourcesMap
+    private ListMultimap<String, ResourceEntry> mResourcesMap
     //处理R文件后生成的styleMap
-    List<StyleableEntry> styleablesList = Lists.newArrayList()
+    private List<StyleableEntry> mStyleablesList = Lists.newArrayList()
 
     //processResource后中间文件
     File resourceOutputFileDir
@@ -27,49 +27,59 @@ class PackageManifest {
 
     Map getHostDependenciesMap() {
         if (hostDependenciesMap == null) {
-            hostDependenciesMap = [] as LinkedHashMap
-            dependenciesFile.splitEachLine('\\s+', { columns ->
-                String id = columns[0]
-                def module = [group: 'unspecified', name: 'unspecified', version: 'unspecified']
-                def findResult = id =~ /[^@:]+/
-                int matchIndex = 0
-                findResult.each {
-                    if (matchIndex == 0) {
-                        module.group = it
-                    }
-                    if (matchIndex == 1) {
-                        module.name = it
-                    }
-                    if (matchIndex == 2) {
-                        module.version = it
-                    }
-                    matchIndex++
-                }
-                hostDependenciesMap.put("${module.group}:${module.name}", module)
-            })
+            generateDependenciesMap()
         }
         return hostDependenciesMap
     }
 
     ListMultimap<String, ResourceEntry> getResourcesMap() {
-        if (resourcesMap == null) {
-            resourcesMap = ArrayListMultimap.create()
+        if (this.mResourcesMap == null) {
             parseRFile()
         }
-        return resourcesMap
+        return this.mResourcesMap
     }
 
     List<StyleableEntry> getStyleablesList() {
-        if (styleablesList == null) {
-            styleablesList = new ArrayList<>()
+        if (mStyleablesList == null) {
             parseRFile()
         }
-        return styleablesList
+        return this.mStyleablesList
+    }
+
+    def generateDependenciesMap() {
+        if (hostDependenciesMap == null) {
+            hostDependenciesMap = [] as LinkedHashMap
+        }
+        dependenciesFile.splitEachLine('\\s+', { columns ->
+            String id = columns[0]
+            def module = [group: 'unspecified', name: 'unspecified', version: 'unspecified']
+            def findResult = id =~ /[^@:]+/
+            int matchIndex = 0
+            findResult.each {
+                if (matchIndex == 0) {
+                    module.group = it
+                }
+                if (matchIndex == 1) {
+                    module.name = it
+                }
+                if (matchIndex == 2) {
+                    module.version = it
+                }
+                matchIndex++
+            }
+            hostDependenciesMap.put("${module.group}:${module.name}", module)
+        })
     }
 
     private void parseRFile() {
         if (!originalResourceFile.exists()) {
             return
+        }
+        if (mResourcesMap == null) {
+            mResourcesMap = ArrayListMultimap.create()
+        }
+        if (mStyleablesList == null) {
+            mStyleablesList = new ArrayList<>()
         }
         originalResourceFile.eachLine { line ->
             if (!line.empty) {
@@ -80,12 +90,62 @@ class PackageManifest {
                 def resId = tokenizer.nextToken('\r\n').trim()
 
                 if (resType == 'styleable') {
-                    styleablesList.add(new StyleableEntry(resName, resId, valueType))
+                    mStyleablesList.add(new StyleableEntry(resName, resId, valueType))
                 } else {
-                    resourcesMap.put(resType, new ResourceEntry(resType, resName, Integer.decode(resId)))
+                    mResourcesMap.put(resType, new ResourceEntry(resType, resName, Integer.decode(resId)))
                 }
             }
         }
+    }
+
+
+    getResourcesForAapt() {
+        convertResourcesForAapt(mResourcesMap)
+    }
+
+    getStyleablesForAapt() {
+        convertStyleablesForAapt(mStyleablesList)
+    }
+
+    def convertResourcesForAapt(ListMultimap<String, ResourceEntry> pluginResources) {
+        def retainedTypes = []
+
+        pluginResources.keySet().each { resType ->
+            def firstEntry = pluginResources.get(resType).get(0)
+            def typeEntry = [type   : "int", name: resType,
+                             id     : parseTypeIdFromResId(firstEntry.resourceId),
+                             _id    : parseTypeIdFromResId(firstEntry.newResourceId),
+                             entries: []]
+
+            pluginResources.get(resType).each { resEntry ->
+                typeEntry.entries.add([
+                        name: resEntry.resourceName,
+                        id  : parseEntryIdFromResId(resEntry.resourceId),
+                        _id : parseEntryIdFromResId(resEntry.newResourceId),
+                        v   : resEntry.resourceId, _v: resEntry.newResourceId,
+                        vs  : resEntry.hexResourceId, _vs: resEntry.hexNewResourceId])
+            }
+
+            retainedTypes.add(typeEntry)
+        }
+
+        retainedTypes.sort { t1, t2 ->
+            t1._id - t2._id
+        }
+
+        return retainedTypes
+    }
+
+
+    def convertStyleablesForAapt(List<StyleableEntry> pluginStyleables) {
+        def retainedStyleables = []
+        pluginStyleables.each { styleableEntry ->
+            retainedStyleables.add([vtype: styleableEntry.valueType,
+                                    type : 'styleable',
+                                    key  : styleableEntry.name,
+                                    idStr: styleableEntry.value])
+        }
+        return retainedStyleables
     }
 
     def parseTypeIdFromResId(int resourceId) {

@@ -4,7 +4,7 @@ class PluginConfigExtension {
     public String libraryName
     public boolean useHostDependencies
     public String hostPath
-
+    public int packageId
 
     String getLibraryName() {
         return libraryName
@@ -28,5 +28,13 @@ class PluginConfigExtension {
 
     void setUseHostDependencies(boolean useHostDependencies) {
         this.useHostDependencies = useHostDependencies
+    }
+
+    int getPackageId() {
+        return packageId
+    }
+
+    void setPackageId(int packageId) {
+        this.packageId = packageId
     }
 }
