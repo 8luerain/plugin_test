@@ -76,10 +76,10 @@ class MergedPackageManifest extends PackageManifest {
 
 
     def getResIdMap() { //映射新的resourceID
-        def idMap = [:] as Map<Integer, Integer>
+        def idMap = [:] as Map<String, String>
         getResourcesMap()
         mPluginManifest.resourcesMap.values().each { resEntry ->
-            idMap.put(resEntry.resourceId, resEntry.newResourceId)
+            idMap.put(Integer.toHexString(resEntry.resourceId), Integer.toHexString(resEntry.newResourceId))
         }
         idMap.each {
             println("idmap [${it}]")

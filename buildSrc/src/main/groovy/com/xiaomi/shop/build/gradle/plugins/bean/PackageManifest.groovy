@@ -137,6 +137,13 @@ class PackageManifest {
         retainedTypes.sort { t1, t2 ->
             t1._id - t2._id
         }
+        retainedTypes.each {
+            it.getAt("entries").each { per->
+                println("per per [${per}]")
+
+            }
+
+        }
 
         return retainedTypes
     }
