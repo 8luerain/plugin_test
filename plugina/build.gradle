@@ -39,6 +39,7 @@ pluginconfig {
     libraryName 'baselib'
     hostPath "${getRootDir()}/app"
     useHostDependencies true
+    packageId 0x11
 
 }
 

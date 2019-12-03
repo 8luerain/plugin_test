@@ -1,14 +1,11 @@
 package com.xiaomi.shop.build.gradle.plugins.utils
 
-import com.google.common.collect.ListMultimap
+
 import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
-import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
-import com.xiaomi.shop.build.gradle.plugins.bean.res.StyleableEntry
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
-
 /**
  * 汇总处理host和工程中各个plugin和lib的数据中心，通信中心
  *
@@ -45,7 +42,7 @@ class ProjectDataCenter {
 
     PackageManifest getHostPackageManifest() {
         if (null == pluginPackageManifest) {
-            hostPackageManifest = new PackageManifest()
+            hostPackageManifest = new PackageManifest(mProject)
             initHostManifest()
         }
         return hostPackageManifest
@@ -53,7 +50,7 @@ class ProjectDataCenter {
 
     PackageManifest getPluginPackageManifest() {
         if (null == pluginPackageManifest) {
-            pluginPackageManifest = new PackageManifest()
+            pluginPackageManifest = new PackageManifest(mProject)
         }
         return pluginPackageManifest
     }
@@ -66,7 +63,7 @@ class ProjectDataCenter {
             throw new IllegalArgumentException("插件资源初始化失败")
         }
         if (null == mergedPluginPackageManifest) {
-            mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest)
+            mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest , mProject)
         }
         return mergedPluginPackageManifest
     }

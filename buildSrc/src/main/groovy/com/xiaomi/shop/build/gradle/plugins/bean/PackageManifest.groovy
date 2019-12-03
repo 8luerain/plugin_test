@@ -5,9 +5,11 @@ import com.google.common.collect.ListMultimap
 import com.google.common.collect.Lists
 import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
 import com.xiaomi.shop.build.gradle.plugins.bean.res.StyleableEntry
+import org.gradle.api.Project
 
 class PackageManifest {
 
+    Project mProject
     //处理后的依赖文件，记录依赖库及版本等
     File dependenciesFile
     //依赖库内存化
@@ -24,6 +26,9 @@ class PackageManifest {
     File resourceOutputFileDir
     File sourceOutputFileDir
 
+    PackageManifest(Project mProject) {
+        this.mProject = mProject
+    }
 
     Map getHostDependenciesMap() {
         if (hostDependenciesMap == null) {
@@ -99,15 +104,15 @@ class PackageManifest {
     }
 
 
-    getResourcesForAapt() {
-        convertResourcesForAapt(mResourcesMap)
+    def getResourcesMapForAapt() {
+        return convertResourcesForAapt(getResourcesMap())
     }
 
-    getStyleablesForAapt() {
-        convertStyleablesForAapt(mStyleablesList)
+    def getStyleablesMapForAapt() {
+        return convertStyleablesForAapt(getStyleablesList())
     }
 
-    def convertResourcesForAapt(ListMultimap<String, ResourceEntry> pluginResources) {
+    private convertResourcesForAapt(ListMultimap<String, ResourceEntry> pluginResources) {
         def retainedTypes = []
 
         pluginResources.keySet().each { resType ->
@@ -137,7 +142,7 @@ class PackageManifest {
     }
 
 
-    def convertStyleablesForAapt(List<StyleableEntry> pluginStyleables) {
+    private convertStyleablesForAapt(List<StyleableEntry> pluginStyleables) {
         def retainedStyleables = []
         pluginStyleables.each { styleableEntry ->
             retainedStyleables.add([vtype: styleableEntry.valueType,
@@ -146,6 +151,14 @@ class PackageManifest {
                                     idStr: styleableEntry.value])
         }
         return retainedStyleables
+    }
+
+     def getResIdMap() { //映射新的resourceID
+        def idMap = [:] as Map<Integer, Integer>
+        getResourcesMap().values().each { resEntry ->
+            idMap.put(resEntry.resourceId, resEntry.resourceId)
+        }
+        return idMap
     }
 
     def parseTypeIdFromResId(int resourceId) {

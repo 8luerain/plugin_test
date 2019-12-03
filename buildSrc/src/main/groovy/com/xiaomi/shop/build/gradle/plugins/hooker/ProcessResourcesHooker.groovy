@@ -4,10 +4,15 @@ import com.android.build.gradle.AndroidConfig
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
+import com.android.sdklib.BuildToolInfo
+import com.google.common.io.Files
 import com.xiaomi.shop.build.gradle.plugins.ShopPlugin
+import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
+import com.xiaomi.shop.build.gradle.plugins.utils.aaptedit.AXmlEditor
 import com.xiaomi.shop.build.gradle.plugins.utils.aaptedit.ArscEditor
+import groovy.io.FileType
 import org.gradle.api.Project
 
 class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidResourcesTask> {
@@ -78,17 +83,24 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
     void handleResource(LinkApplicationAndroidResourcesTask task) {
         File apFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
         def aaptResourceDir = project.plugins.findPlugin(ShopPlugin).aaptResourceDir
+        def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改
         unzip(apFile, aaptResourceDir)
         //2：删除res资源文件
-        removeSameResourceFile(aaptResourceDir)
+        removeSameResourceFile(aaptResourceDir, modifyFileList)
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
-        removeItemFromArscFile(aaptResourceDir)
+        modifyItemOfArscFile(aaptResourceDir, task)
+
         //4:处理xml文件，对资源文件的引用
+        modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
+
+        //6：将处理后的文件重新打包
+//        reProcessResource(apFile)
     }
+
 
     private void unzip(File ap_fle, File aaptResourceDir) {
         if (ap_fle.exists()) {
@@ -103,18 +115,17 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
         }
     }
 
-    void removeSameResourceFile(File aaptResourceDir) {
+    private void removeSameResourceFile(File aaptResourceDir, Set<String> modifyFileList) {
         def typeList = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.resourcesMap.keySet()
         typeList.each {
             println("typelist type[${it}]")
         }
-        ArrayList<String> recordFilteredResPath = [] as ArrayList
         def resDir = new File(aaptResourceDir, 'res')
         resDir.listFiles().each { typeDir ->
             def type = typeList.find { typeDir.name == it || typeDir.name.startsWith("${it}-") }
             if (type == null) {
                 typeDir.listFiles().each {
-                    recordFilteredResPath.add("res/$typeDir.name/$it.name")
+                    modifyFileList.add("res/$typeDir.name/$it.name")
                 }
                 typeDir.deleteDir()
                 return
@@ -125,7 +136,7 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
             entryFiles.each { entryFile ->
                 def entry = resListOfType.find { entryFile.name.startsWith("${it.resourceName}.") }
                 if (entry == null) {
-                    recordFilteredResPath.add("res/$typeDir.name/$entryFile.name")
+                    modifyFileList.add("res/$typeDir.name/$entryFile.name")
                     entryFile.delete()
                     retainedEntryCount--
                 }
@@ -135,15 +146,50 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
                 typeDir.deleteDir()
             }
         }
-        recordFilteredResPath.each {
+        modifyFileList.each {
             println("recordFilteredResPath -- ${it}")
         }
     }
 
-    def removeItemFromArscFile(File aaptResourceDir) {
-        def libRefTable = ["${virtualApk.packageId}": par.applicationId]
-        final File arscFile = new File(this.assetDir, RESOURCES_ARSC)
-        final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsVersion)
-        arscEditor.slice(pp, idMaps, libRefTable, retainedTypes)
+    private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task) {
+        MergedPackageManifest manifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
+        def libRefTable = ["${manifest.packageId}" : task.applicationId]
+        final File arscFile = new File(aaptResourceDir, RESOURCES_ARSC)
+        final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsRevision)
+        arscEditor.slice(manifest.packageId, manifest.resIdMap, libRefTable, manifest.resourcesMapForAapt)
     }
+
+    private void modifyItemOfXmlFile(File aaptResourceDir, Set<String> modifyFileList) {
+        final String unixFileFileSeparator = "/"
+        MergedPackageManifest manifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
+        int len = aaptResourceDir.canonicalPath.length() + 1
+        def isWindows = (File.separator != unixFileFileSeparator) //unix 文件路径分割符为'/'  window路径分隔符为'\'
+
+        aaptResourceDir.eachFileRecurse(FileType.FILES) { file ->
+            if ('xml'.equalsIgnoreCase(Files.getFileExtension(file.name))) {
+                new AXmlEditor(file).setPackageId(manifest.packageId, manifest.resIdMap)
+
+                if (modifyFileList != null) {
+                    def path = file.canonicalPath.substring(len)
+                    if (isWindows) {
+                        path = path.replaceAll('\\\\', unixFileFileSeparator)
+                    }
+                    modifyFileList.add(path)
+                }
+            }
+        }
+    }
+
+
+    private void reProcessResource(File ap_org, File aaptResourceDir, LinkApplicationAndroidResourcesTask task) {
+        project.exec {
+            executable task.buildTools.getPath(BuildToolInfo.PathId.AAPT)
+            workingDir aaptResourceDir
+            args 'add', ap_org.path
+            args updatedResources
+            standardOutput = System.out
+            errorOutput = System.err
+        }
+    }
+
 }
