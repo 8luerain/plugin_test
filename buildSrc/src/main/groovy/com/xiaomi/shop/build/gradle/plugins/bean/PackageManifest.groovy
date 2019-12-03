@@ -153,13 +153,6 @@ class PackageManifest {
         return retainedStyleables
     }
 
-     def getResIdMap() { //映射新的resourceID
-        def idMap = [:] as Map<Integer, Integer>
-        getResourcesMap().values().each { resEntry ->
-            idMap.put(resEntry.resourceId, resEntry.resourceId)
-        }
-        return idMap
-    }
 
     def parseTypeIdFromResId(int resourceId) {
         resourceId >> 16 & 0xFF

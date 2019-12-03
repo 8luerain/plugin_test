@@ -16,7 +16,6 @@ import groovy.io.FileType
 import org.gradle.api.Project
 
 class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidResourcesTask> {
-    public static final String RESOURCES_ARSC = 'resources.arsc'
 
     AndroidConfig androidConfig
     File stable_id_lib_file
@@ -85,15 +84,15 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
         def aaptResourceDir = project.plugins.findPlugin(ShopPlugin).aaptResourceDir
         def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改
-        unzip(apFile, aaptResourceDir)
+//        unzip(apFile, aaptResourceDir)
         //2：删除res资源文件
-        removeSameResourceFile(aaptResourceDir, modifyFileList)
+//        removeSameResourceFile(aaptResourceDir, modifyFileList)
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
         modifyItemOfArscFile(aaptResourceDir, task)
 
         //4:处理xml文件，对资源文件的引用
-        modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
+//        modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
 
@@ -146,17 +145,14 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
                 typeDir.deleteDir()
             }
         }
-        modifyFileList.each {
-            println("recordFilteredResPath -- ${it}")
-        }
     }
 
     private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task) {
-        MergedPackageManifest manifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
-        def libRefTable = ["${manifest.packageId}" : task.applicationId]
-        final File arscFile = new File(aaptResourceDir, RESOURCES_ARSC)
+        MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
+        def libRefTable = ["${mergeManifest.packageId}": task.applicationId]
+        final File arscFile = new File(aaptResourceDir, 'resources.arsc')
         final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsRevision)
-        arscEditor.slice(manifest.packageId, manifest.resIdMap, libRefTable, manifest.resourcesMapForAapt)
+        arscEditor.slice(mergeManifest.packageId, mergeManifest.resIdMap, libRefTable, mergeManifest.resourcesMapForAapt)
     }
 
     private void modifyItemOfXmlFile(File aaptResourceDir, Set<String> modifyFileList) {

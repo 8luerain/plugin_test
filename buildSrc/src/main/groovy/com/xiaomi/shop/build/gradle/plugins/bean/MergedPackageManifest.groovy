@@ -9,8 +9,8 @@ import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.Project
 
 class MergedPackageManifest extends PackageManifest {
-    PackageManifest mInput
-    PackageManifest mSource
+    PackageManifest mHostManifest
+    PackageManifest mPluginManifest
     //处理R文件后生成的资源map
     private ListMultimap<String, ResourceEntry> mMergedResourcesMap
     //处理R文件后生成的styleMap
@@ -19,49 +19,71 @@ class MergedPackageManifest extends PackageManifest {
 
     int packageId = 0x7f //指定新的packageID,默认7f
 
-    MergedPackageManifest(PackageManifest input, PackageManifest source , Project project) {
+    MergedPackageManifest(PackageManifest input, PackageManifest source, Project project) {
         super(project)
-        mInput = input
-        mSource = source
+        mHostManifest = input
+        mPluginManifest = source
         packageId = mProject.getExtensions().findByType(PluginConfigExtension).packageId
     }
 
 
     @Override
     ListMultimap<String, ResourceEntry> getResourcesMap() {
-        def sourceResources = mSource.resourcesMap
-        def inputResources = mInput.resourcesMap
+        def plugin = mPluginManifest.resourcesMap
+        def host = mHostManifest.resourcesMap
         if (mMergedResourcesMap == null) {
             mMergedResourcesMap = ArrayListMultimap.create()
-            sourceResources.values().each {
-                def index = inputResources.get(it.resourceType).indexOf(it)
-                if (index >= 0) {
-                    it.newResourceId = inputResources.get(it.resourceType).get(index).resourceId
-                    inputResources.get(it.resourceType).set(index, it)
-                } else {
-                    mMergedResourcesMap.put(it.resourceType, it)
+            plugin.keySet().each { key ->
+                int newResIndex = 0
+                plugin.get(key).each {
+                    def index = host.get(it.resourceType).indexOf(it)
+                    if (index >= 0) {//相同的
+                        //更新成host的id，保证使用hostAssetManger可以正常找到资源
+                        it.newResourceId = host.get(it.resourceType).get(index).resourceId
+                        //保证后续生成映射map时，能使用带更新过的resID
+                        host.get(it.resourceType).set(index, it)
+                    } else {
+                        //重新排序
+                        it.setNewResourceId(packageId, parseTypeIdFromResId(it.resourceId), newResIndex++)
+                        mMergedResourcesMap.put(it.resourceType, it)
+                    }
                 }
             }
+
         }
+
         return mMergedResourcesMap
     }
 
     @Override
     List<StyleableEntry> getStyleablesList() {
-        def sourceStyle = mSource.styleablesList
-        def inputStyle = mInput.styleablesList
+        def plugin = mPluginManifest.styleablesList
+        def host = mHostManifest.styleablesList
         if (mMergedStyleablesList == null) {
             mMergedStyleablesList = new ArrayList<>()
-            sourceStyle.each {
-                def index = inputStyle.indexOf(it)
+            plugin.each {
+                def index = host.indexOf(it)
                 if (index >= 0) {
-//                    it.value = inputStyle.get(index).value
-//                    inputStyle.set(index, it)
+                    it.value = host.get(index).value
+                    host.set(index, it)
                 } else {
                     mMergedStyleablesList.add(it)
                 }
             }
         }
         return mMergedStyleablesList
+    }
+
+
+    def getResIdMap() { //映射新的resourceID
+        def idMap = [:] as Map<Integer, Integer>
+        getResourcesMap()
+        mPluginManifest.resourcesMap.values().each { resEntry ->
+            idMap.put(resEntry.resourceId, resEntry.newResourceId)
+        }
+        idMap.each {
+            println("idmap [${it}]")
+        }
+        return idMap
     }
 }
