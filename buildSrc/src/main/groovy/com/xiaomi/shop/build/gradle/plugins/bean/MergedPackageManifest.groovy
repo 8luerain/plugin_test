@@ -67,6 +67,9 @@ class MergedPackageManifest extends PackageManifest {
                     it.value = host.get(index).value
                     host.set(index, it)
                 } else {
+                    if (it.valueType == "int[]"){
+//                        it.value
+                    }
                     mMergedStyleablesList.add(it)
                 }
             }

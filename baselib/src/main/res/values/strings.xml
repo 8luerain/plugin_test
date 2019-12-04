@@ -1,3 +1,4 @@
 <resources>
     <string name="formlib">fromlib</string>
+    <string name="title_activity_base_lib">BaseLibActivity</string>
 </resources>

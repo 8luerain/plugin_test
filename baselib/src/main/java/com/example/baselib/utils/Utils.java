@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class Utils {
+    public static final String UTILS_STRIGN = "util_string";
     public static String getUtilsString() {
         return "from utils string";
     }
