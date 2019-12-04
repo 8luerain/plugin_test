@@ -40,7 +40,6 @@ artifacts::baselib:unspecified@jar
 com.google.android.material:material:1.0.0@aar
 com.squareup.okhttp3:okhttp:4.2.2@jar
 com.squareup.okio:okio:2.2.2@jar
-com.wx.goodview:goodview:1.0.0@aar
 org.jetbrains.kotlin:kotlin-stdlib-common:1.3.50@jar
 org.jetbrains.kotlin:kotlin-stdlib:1.3.50@jar
 org.jetbrains:annotations:13.0@jar

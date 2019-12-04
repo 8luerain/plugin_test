@@ -10,19 +10,21 @@ import com.xiaomi.shop.build.gradle.plugins.ShopPlugin
 import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
+import com.xiaomi.shop.build.gradle.plugins.utils.ZipFileUtil
 import com.xiaomi.shop.build.gradle.plugins.utils.aaptedit.AXmlEditor
 import com.xiaomi.shop.build.gradle.plugins.utils.aaptedit.ArscEditor
 import groovy.io.FileType
 import org.gradle.api.Project
 
-class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidResourcesTask> {
+//android gradle plugin 更新后，使用新的LinkApplicationAndroidResourcesTask
+
+class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApplicationAndroidResourcesTask> {
 
     AndroidConfig androidConfig
-    File stable_id_lib_file
     PackageManifest mPluginManifest
 
 
-    ProcessResourcesHooker(Project project, ApkVariant apkVariant) {
+    LinkApplicationAndroidResourcesTaskHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
         androidConfig = project.extensions.findByType(AppExtension)
         mPluginManifest = ProjectDataCenter.getInstance(project).pluginPackageManifest
@@ -36,68 +38,41 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
-        println("hahaha projectname[$project.name] , taskname[${aaptTask.name}], taskclass[${aaptTask.class.name}]")
 
-//        Project libProject = project.rootProject.findProject("baselib")
-//        if (libProject) {
-//            stable_id_lib_file = libProject.file("stable_id_file.txt")
-//            if (!stable_id_lib_file.exists()) {
-//                Log.i "ProcessResourcesHooker", "${stable_id_lib_file} not exist , generate it."
-//                stable_id_lib_file.createNewFile()
-//            } else {
-//
-//            }
-//        }
-//        AppExtension extension = project.getExtensions().findByType(AppExtension.class)
-//        extension.aaptOptions.additionalParameters("--emit-ids", "${stable_id_lib_file.absolutePath}")
-//        println("is aatp2 enable[${aaptTask.aaptOptions}]")
-//        aaptTask.getAaptOptionsInput().additionalParameters("--emit-ids", "${stable_id_lib_file.absolutePath}")
     }
-
 
     @Override
     void afterTaskExecute(LinkApplicationAndroidResourcesTask task) {
-//        ProjectDataCenter.getInstance(project).pluginPackageManifest.resourceOutputFileDir = task
-//        variantData.outputScope.getOutputs(TaskOutputHolder.TaskOutputType.PROCESSED_RES).each {
-//            repackage(par, it.outputFile)
-//        }
+        initPluginManifest(task)
+        handleResource(task)
+    }
+
+    private void initPluginManifest(LinkApplicationAndroidResourcesTask task) {
         mPluginManifest.originalResourceFile = task.textSymbolOutputFile
         mPluginManifest.resourceOutputFileDir = task.resPackageOutputFolder
         mPluginManifest.sourceOutputFileDir = task.sourceOutputDir
-
-//        variantData.getOutputScope().getApkDatas().each { ApkData data ->
-//            data.outputs.each { OutputFile outputFile ->
-//                println("output file name[${outputFile.getOutputFile().getName()}]")
-//            }
-//        }
-//        task.outputs.getPreviousOutputFiles().each {
-//            println("getPreviousOutputFiles[${it.name}]")
-//        }
-//        ExistingBuildElements
-        println("scope dirname [${scope.fullVariantName}]")
-        println("res dir [${task.sourceOutputDir}]  source output dir[${task.resPackageOutputFolder}]")
-        handleResource(task)
     }
 
     void handleResource(LinkApplicationAndroidResourcesTask task) {
         File apFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
         def aaptResourceDir = project.plugins.findPlugin(ShopPlugin).aaptResourceDir
+        def removedFileList = [] as HashSet<String> //记录需要删除的文件
         def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改
-//        unzip(apFile, aaptResourceDir)
+        unzip(apFile, aaptResourceDir)
         //2：删除res资源文件
-//        removeSameResourceFile(aaptResourceDir, modifyFileList)
+        removeSameResourceFile(aaptResourceDir, removedFileList)
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
-        modifyItemOfArscFile(aaptResourceDir, task)
+//        modifyItemOfArscFile(aaptResourceDir, task)
 
         //4:处理xml文件，对资源文件的引用
-//        modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
+        modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
-
-        //6：将处理后的文件重新打包
-//        reProcessResource(apFile)
+        modifyRFile(task)
+        //6：更新zip文件
+        reProcessResource(apFile, removedFileList, modifyFileList, aaptResourceDir, task)
     }
 
 
@@ -176,16 +151,39 @@ class ProcessResourcesHooker extends GradleTaskHooker<LinkApplicationAndroidReso
         }
     }
 
+    private void modifyRFile(LinkApplicationAndroidResourcesTask task) {
+        MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
+        File rFile = mPluginManifest.originalResourceFile
+        rFile.write('')
+        rFile.withPrintWriter { pw ->
+            mergeManifest.resourcesMapForAapt.each { t ->
+                t.entries.each { e ->
+                    pw.println("${t.type} ${t.name} ${e.name} ${e._vs}")
+                }
+            }
+            mergeManifest.styleablesMapForAapt.each {
+                pw.println("${it.vtype} ${it.type} ${it.key} ${it.idStr}")
+            }
+        }
+    }
 
-    private void reProcessResource(File ap_org, File aaptResourceDir, LinkApplicationAndroidResourcesTask task) {
+    private void reProcessResource(File ap_org, Set<String> removedFileList, Set<String> modifyFileList
+                                   , File aaptResourceDir, LinkApplicationAndroidResourcesTask task) {
+        //-------------方法1 ，需要原包，实现更新apFile-------------
+
+        //删除原来zip包下变更过的文件
+        ZipFileUtil.deleteAll(ap_org, removedFileList + modifyFileList)
+        //将更新过的文件插入到zip包里
         project.exec {
             executable task.buildTools.getPath(BuildToolInfo.PathId.AAPT)
             workingDir aaptResourceDir
             args 'add', ap_org.path
-            args updatedResources
+            args modifyFileList
             standardOutput = System.out
             errorOutput = System.err
         }
+
+        //-------------方法2 ，使用aapt2 ，生成新的apFile-------------
     }
 
 }
