@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
     private TextView txvPlugin;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -17,5 +18,6 @@ public class MainActivity extends AppCompatActivity {
         txvPlugin = findViewById(R.id.plugin_txv);
 //        txvPlugin.setText(com.example.baselib.R.string.formlib);
         txvPlugin.setText(R.string.string_form_lib);
+        getSupportFragmentManager().beginTransaction().add(R.id.container_plugina_aty, new ItemFragment()).commit();
     }
 }

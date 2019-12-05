@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.xiaomi.shop.build.gradle.plugin'
+//apply plugin: 'com.xiaomi.shop.build.gradle.plugin'
 
 android {
     compileSdkVersion 28
@@ -35,13 +35,13 @@ android {
 
 }
 
-pluginconfig {
-    libraryName 'baselib'
-    hostPath "${getRootDir()}/app"
-    useHostDependencies true
-    packageId 0x11
-
-}
+//pluginconfig {
+//    libraryName 'baselib'
+//    hostPath "${getRootDir()}/app"
+//    useHostDependencies true
+//    packageId 0x11
+//
+//}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -51,8 +51,8 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.0.0-beta01'
 }
 
-autoOutput2Host()
-
+//autoOutput2Host()
+//
 def autoOutput2Host() {
     project.afterEvaluate {
         project.tasks.findByName("packageRelease").doLast {

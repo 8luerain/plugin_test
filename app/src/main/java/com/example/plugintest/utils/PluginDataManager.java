@@ -1,6 +1,9 @@
 package com.example.plugintest.utils;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -28,6 +31,22 @@ public class PluginDataManager {
         return fullUnzipPath;
     }
 
+    public static Resources getPluginResource(Context context, String pluginName) {
+        try {
+            PackageManager manager = context.getPackageManager();
+            String restoredPath = getPluginsDirFullPath(context) + File.separator + pluginName;
+            PackageInfo info = manager.getPackageArchiveInfo(restoredPath,
+                    PackageManager.GET_ACTIVITIES | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS | PackageManager.GET_RECEIVERS | PackageManager.GET_META_DATA);
+            info.applicationInfo.publicSourceDir = restoredPath;
+            info.applicationInfo.sourceDir = restoredPath;
+            return manager.getResourcesForApplication(info.applicationInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e(TAG, "loadPlugins: ", e);
+        }
+        return null;
+    }
+
     public static void copyAllPlugin(Context context) {
         try {
             //1:建立unzipPath
@@ -35,7 +54,7 @@ public class PluginDataManager {
 
             //拷贝到本地目录
             byte[] bf = new byte[1024];
-            BufferedInputStream inputStream = new BufferedInputStream(context.getAssets().open( "pluginc.apk"));
+            BufferedInputStream inputStream = new BufferedInputStream(context.getAssets().open("pluginc.apk"));
             FileOutputStream fileOutputStream = new FileOutputStream(new File(pluginDir.getAbsolutePath()));
             while (inputStream.read(bf) != -1) {
                 fileOutputStream.write(bf);

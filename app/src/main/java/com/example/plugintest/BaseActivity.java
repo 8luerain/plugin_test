@@ -1,7 +1,5 @@
 package com.example.plugintest;
 
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import androidx.annotation.Nullable;
@@ -24,7 +22,8 @@ public class BaseActivity extends AppCompatActivity {
 
     protected void loadPlugins() {
         //构建插件化环境
-        String restoredPath = PluginDataManager.getPluginsDirFullPath(this) + "/plugina.apk";
+        String restoredPath = PluginDataManager.getPluginsDirFullPath(this) + File.separator + "plugina.apk";
+        Log.d(TAG, "loadPlugins: restoredPath [" + restoredPath + "]");
         StringBuilder addApkDex = new StringBuilder();
         File pluginsDir = new File(PluginDataManager.getPluginsDirFullPath(this));
         for (File file : pluginsDir.listFiles()) {
@@ -33,23 +32,26 @@ public class BaseActivity extends AppCompatActivity {
         mPluginInfo = new PluginInfo();
         mPluginInfo.classLoader = new DexClassLoader(addApkDex.toString(),
                 PluginDataManager.getPluginsUnzipDirFullPath(this), null, getClassLoader());
-        try {
-            PackageManager manager = getPackageManager();
-            PackageInfo info = manager.getPackageArchiveInfo(restoredPath, 0);
-            info.applicationInfo.publicSourceDir = restoredPath;
-            info.applicationInfo.sourceDir = restoredPath;
-            mPluginInfo.resources = manager.getResourcesForApplication(info.applicationInfo);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG, "loadPlugins: ", e);
-        }
+//        try {
+//            PackageManager manager = getPackageManager();
+//            PackageInfo info = manager.getPackageArchiveInfo(restoredPath,
+//                    PackageManager.GET_ACTIVITIES | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS | PackageManager.GET_RECEIVERS | PackageManager.GET_META_DATA);
+//            info.applicationInfo.publicSourceDir = restoredPath;
+//            info.applicationInfo.sourceDir = restoredPath;
+//            mPluginInfo.resources = manager.getResourcesForApplication(info.applicationInfo);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            Log.e(TAG, "loadPlugins: ", e);
+//        }
     }
 
     protected Object getInstanceFromPlugin(String className, @Nullable Object... args) {
         try {
-            return Reflect.on(className, mPluginInfo.classLoader)
+            Object o = Reflect.on(className, mPluginInfo.classLoader)
                     .create(args)
                     .get();
+            Log.d(TAG, "getInstanceFromPlugin: [" + o + "]");
+            return o;
         } catch (Reflect.ReflectException e) {
             e.printStackTrace();
         }

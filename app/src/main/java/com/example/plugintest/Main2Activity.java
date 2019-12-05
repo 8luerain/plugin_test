@@ -4,6 +4,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import com.example.plugintest.dummy.DummyContent;
+import com.example.plugintest.utils.PluginDataManager;
 
 public class Main2Activity extends BaseActivity implements ItemFragment.OnListFragmentInteractionListener {
 
@@ -23,6 +24,6 @@ public class Main2Activity extends BaseActivity implements ItemFragment.OnListFr
 
     @Override
     public Resources getResources() {
-        return mPluginInfo.resources;
+        return PluginDataManager.getPluginResource(this, "plugina.apk");
     }
 }
