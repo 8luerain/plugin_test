@@ -15,8 +15,8 @@ class PackageManifest {
     //依赖库内存化
     Map hostDependenciesMap
 
-    //processResource后， 原始的R文件
-    File originalResourceFile
+    //processResource后， 原始的R文件 ,../build/intermediates/symbols/release/R.txt
+    File originalResourceTxtFile
     //处理R文件后生成的资源map
     private ListMultimap<String, ResourceEntry> mResourcesMap
     //处理R文件后生成的styleMap
@@ -41,14 +41,14 @@ class PackageManifest {
         if (this.mResourcesMap == null) {
             parseRFile()
         }
-        return this.mResourcesMap
+        return mResourcesMap
     }
 
     List<StyleableEntry> getStyleablesList() {
         if (mStyleablesList == null) {
             parseRFile()
         }
-        return this.mStyleablesList
+        return mStyleablesList
     }
 
     def generateDependenciesMap() {
@@ -77,7 +77,7 @@ class PackageManifest {
     }
 
     private void parseRFile() {
-        if (!originalResourceFile.exists()) {
+        if (!originalResourceTxtFile.exists()) {
             return
         }
         if (mResourcesMap == null) {
@@ -86,7 +86,7 @@ class PackageManifest {
         if (mStyleablesList == null) {
             mStyleablesList = new ArrayList<>()
         }
-        originalResourceFile.eachLine { line ->
+        originalResourceTxtFile.eachLine { line ->
             if (!line.empty) {
                 def tokenizer = new StringTokenizer(line)
                 def valueType = tokenizer.nextToken()
@@ -105,14 +105,14 @@ class PackageManifest {
 
 
     def getResourcesMapForAapt() {
-        return convertResourcesForAapt(getResourcesMap())
+        return convertResourcesForAsrsEditor(getResourcesMap())
     }
 
-    def getStyleablesMapForAapt() {
-        return convertStyleablesForAapt(getStyleablesList())
+    def getStyleablesListForAapt() {
+        return convertStyleablesForArscEditor(getStyleablesList())
     }
 
-    private convertResourcesForAapt(ListMultimap<String, ResourceEntry> pluginResources) {
+    def convertResourcesForAsrsEditor(ListMultimap<String, ResourceEntry> pluginResources) {
         def retainedTypes = []
 
         pluginResources.keySet().each { resType ->
@@ -137,19 +137,12 @@ class PackageManifest {
         retainedTypes.sort { t1, t2 ->
             t1._id - t2._id
         }
-        retainedTypes.each {
-            it.getAt("entries").each { per->
-                println("per per [${per}]")
-
-            }
-
-        }
 
         return retainedTypes
     }
 
 
-    private convertStyleablesForAapt(List<StyleableEntry> pluginStyleables) {
+    def convertStyleablesForArscEditor(List<StyleableEntry> pluginStyleables) {
         def retainedStyleables = []
         pluginStyleables.each { styleableEntry ->
             retainedStyleables.add([vtype: styleableEntry.valueType,

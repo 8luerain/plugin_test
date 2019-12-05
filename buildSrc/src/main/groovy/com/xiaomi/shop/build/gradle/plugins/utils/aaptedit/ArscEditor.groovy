@@ -89,6 +89,7 @@ public class ArscEditor extends AssetEditor {
         }
 
         // Filter typeSpecs
+        //------------- retainedTypes [资源数组]  ------------comment by mao
         retainedTypes.each {
             if (it.id == ID_DELETED) {
                 // TODO: Add empty entry to default config
@@ -98,9 +99,10 @@ public class ArscEditor extends AssetEditor {
             if (it.id == ID_NO_ATTR) {
                 return
             }
-
+            //------------- it.id 某[资源类型ID]  string[] ------------comment by mao
             def specIndex = typeIdMap.get(it.id)
             def ts = t.typeList.specs[specIndex]
+            //------------- es  某type下所有资源 ------------comment by mao
             def es = it.entries
             def newEntryCount = es.size()
             def d = (ts.entryCount - newEntryCount) * 4
@@ -121,13 +123,14 @@ public class ArscEditor extends AssetEditor {
                 def offsets = []
                 int offset = 0
                 def emptyCount = 0
+                //------------- e  某个具体资源 ------------comment by mao
                 es.each { e ->
                     if (e.id == ID_DELETED) {
                         // TODO: Add empty entry to default config
                         throw new UnsupportedOperationException("No support deleting resources on lib.* now")
                     }
-
-                    def entry = it.entries[e.id]
+                    //------------- e.id  某个[具体资源id] ------------comment by mao
+                    def entry = it.entries[e.id] //因为id顺序排放，所以可以找到对应某个资源实体
                     if (entry == null) {
                         throw new Exception("Missing entry at ${e} on ${it}!")
                     }

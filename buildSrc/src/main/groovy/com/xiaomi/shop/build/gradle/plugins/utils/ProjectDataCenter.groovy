@@ -100,7 +100,7 @@ class ProjectDataCenter {
             throw new InvalidUserDataException(err.toString())
         }
         hostPackageManifest.dependenciesFile = hostVersions
-        hostPackageManifest.originalResourceFile = hostR
+        hostPackageManifest.originalResourceTxtFile = hostR
     }
 
 

@@ -19,6 +19,7 @@ androidx.fragment:fragment:1.1.0@aar
 androidx.interpolator:interpolator:1.0.0@aar
 androidx.legacy:legacy-support-core-ui:1.0.0@aar
 androidx.legacy:legacy-support-core-utils:1.0.0@aar
+androidx.legacy:legacy-support-v4:1.0.0-beta01@aar
 androidx.lifecycle:lifecycle-common:2.1.0@jar
 androidx.lifecycle:lifecycle-livedata-core:2.0.0@aar
 androidx.lifecycle:lifecycle-livedata:2.0.0@aar
@@ -26,6 +27,7 @@ androidx.lifecycle:lifecycle-runtime:2.1.0@aar
 androidx.lifecycle:lifecycle-viewmodel:2.1.0@aar
 androidx.loader:loader:1.0.0@aar
 androidx.localbroadcastmanager:localbroadcastmanager:1.0.0@aar
+androidx.media:media:1.0.0-beta01@aar
 androidx.print:print:1.0.0@aar
 androidx.recyclerview:recyclerview:1.0.0@aar
 androidx.savedstate:savedstate:1.0.0@aar

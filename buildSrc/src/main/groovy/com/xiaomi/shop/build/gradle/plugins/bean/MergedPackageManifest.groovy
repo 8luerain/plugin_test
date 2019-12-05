@@ -2,7 +2,6 @@ package com.xiaomi.shop.build.gradle.plugins.bean
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
-import com.google.common.collect.Lists
 import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
 import com.xiaomi.shop.build.gradle.plugins.bean.res.StyleableEntry
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
@@ -14,7 +13,7 @@ class MergedPackageManifest extends PackageManifest {
     //处理R文件后生成的资源map
     private ListMultimap<String, ResourceEntry> mMergedResourcesMap
     //处理R文件后生成的styleMap
-    private List<StyleableEntry> mMergedStyleablesList = Lists.newArrayList()
+    private List<StyleableEntry> mMergedStyleablesList
     //构建R.txt文件格式的list
 
     int packageId = 0x7f //指定新的packageID,默认7f
@@ -59,26 +58,43 @@ class MergedPackageManifest extends PackageManifest {
     List<StyleableEntry> getStyleablesList() {
         def plugin = mPluginManifest.styleablesList
         def host = mHostManifest.styleablesList
+        List<ResourceEntry> attrs = getResourcesMap().get("attr")
         if (mMergedStyleablesList == null) {
             mMergedStyleablesList = new ArrayList<>()
-            plugin.each {
-                def index = host.indexOf(it)
+            plugin.each { styleable ->
+                def index = host.indexOf(styleable)
                 if (index >= 0) {
-                    it.value = host.get(index).value
-                    host.set(index, it)
+                    styleable.value = host.get(index).value
+                    host.set(index, styleable)
                 } else {
-                    if (it.valueType == "int[]"){
-//                        it.value
+                    if (styleable.valueType == "int[]") {
+                        List styleableEntries = styleable.valueAsList
+                        styleableEntries.eachWithIndex { resId, i ->
+                            ResourceEntry findAttr = attrs.find { it.hexResourceId == resId }
+                            if (null != findAttr) {
+                                styleableEntries[i] = findAttr.hexNewResourceId
+                            }
+                        }
+                        styleable.setValue(styleableEntries)
                     }
-                    mMergedStyleablesList.add(it)
+                    mMergedStyleablesList.add(styleable)
                 }
             }
         }
         return mMergedStyleablesList
     }
 
+    @Override
+    def getResourcesMapForAapt() {
+        return convertResourcesForAsrsEditor(getResourcesMap())
+    }
 
-    def getResIdMap() { //映射新的resourceID
+    @Override
+    def getStyleablesListForAapt() {
+        return convertStyleablesForArscEditor(getStyleablesList())
+    }
+
+    def getResIdMapForArsc() { //映射新的resourceID
         def idMap = [:] as Map<Integer, Integer>
         getResourcesMap()
         mPluginManifest.resourcesMap.values().each { resEntry ->

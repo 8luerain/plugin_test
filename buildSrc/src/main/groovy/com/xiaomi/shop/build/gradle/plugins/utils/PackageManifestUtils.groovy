@@ -6,6 +6,6 @@ class PackageManifestUtils {
 
     //是否已经经过aapt处理
     static boolean hasAaptProcessed(PackageManifest manifest) {
-        return null != manifest && null != manifest.originalResourceFile
+        return null != manifest && null != manifest.originalResourceTxtFile
     }
 }

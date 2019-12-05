@@ -47,4 +47,26 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation("com.squareup.okhttp3:okhttp:4.2.1")
     implementation project(path: ':baselib')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0-beta01'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0-beta01'
 }
+
+autoOutput2Host()
+
+def autoOutput2Host() {
+    project.afterEvaluate {
+        project.tasks.findByName("packageRelease").doLast {
+            it.outputs.getFiles().each { File output ->
+                if (output.getAbsolutePath().contains("apk")) {
+                    project.copy {
+                        from output
+                        into new File([project.getRootDir(), "app", "src", "main", "assets", "plugins"].join(File.separator))
+                        rename { "plugina.apk" }
+                    }
+                }
+            }
+        }
+    }
+}
+
+

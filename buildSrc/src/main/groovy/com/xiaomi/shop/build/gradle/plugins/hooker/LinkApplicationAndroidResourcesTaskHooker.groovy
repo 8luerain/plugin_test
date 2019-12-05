@@ -38,7 +38,9 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
+                aaptTask.outputs.getFiles().each {
 
+                }
     }
 
     @Override
@@ -48,7 +50,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
     }
 
     private void initPluginManifest(LinkApplicationAndroidResourcesTask task) {
-        mPluginManifest.originalResourceFile = task.textSymbolOutputFile
+        mPluginManifest.originalResourceTxtFile = task.textSymbolOutputFile
         mPluginManifest.resourceOutputFileDir = task.resPackageOutputFolder
         mPluginManifest.sourceOutputFileDir = task.sourceOutputDir
     }
@@ -70,7 +72,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
-        modifyRFile(task)
+        modifyRFile()
         //6：更新zip文件
         reProcessResource(apFile, removedFileList, modifyFileList, aaptResourceDir, task)
     }
@@ -127,7 +129,8 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         def libRefTable = ["${mergeManifest.packageId}": task.applicationId]
         final File arscFile = new File(aaptResourceDir, 'resources.arsc')
         final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsRevision)
-        arscEditor.slice(mergeManifest.packageId, mergeManifest.resIdMap, libRefTable, mergeManifest.resourcesMapForAapt)
+        arscEditor.slice(mergeManifest.packageId, mergeManifest.resIdMapForArsc, libRefTable,
+                mergeManifest.resourcesMapForAapt)
     }
 
     private void modifyItemOfXmlFile(File aaptResourceDir, Set<String> modifyFileList) {
@@ -138,7 +141,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
         aaptResourceDir.eachFileRecurse(FileType.FILES) { file ->
             if ('xml'.equalsIgnoreCase(Files.getFileExtension(file.name))) {
-                new AXmlEditor(file).setPackageId(manifest.packageId, manifest.resIdMap)
+                new AXmlEditor(file).setPackageId(manifest.packageId, manifest.resIdMapForArsc)
 
                 if (modifyFileList != null) {
                     def path = file.canonicalPath.substring(len)
@@ -151,9 +154,9 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         }
     }
 
-    private void modifyRFile(LinkApplicationAndroidResourcesTask task) {
+    private void modifyRFile() {
         MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
-        File rFile = mPluginManifest.originalResourceFile
+        File rFile = mPluginManifest.originalResourceTxtFile
         rFile.write('')
         rFile.withPrintWriter { pw ->
             mergeManifest.resourcesMapForAapt.each { t ->
@@ -161,7 +164,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
                     pw.println("${t.type} ${t.name} ${e.name} ${e._vs}")
                 }
             }
-            mergeManifest.styleablesMapForAapt.each {
+            mergeManifest.styleablesListForAapt.each {
                 pw.println("${it.vtype} ${it.type} ${it.key} ${it.idStr}")
             }
         }

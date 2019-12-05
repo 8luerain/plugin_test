@@ -1,11 +1,8 @@
 package com.example.plugina;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.widget.TextView;
-
-import com.example.baselib.utils.Utils;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
     private TextView txvPlugin;
@@ -19,6 +16,6 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         txvPlugin = findViewById(R.id.plugin_txv);
 //        txvPlugin.setText(com.example.baselib.R.string.formlib);
-        txvPlugin.setText(Utils.getUtilsString());
+        txvPlugin.setText(R.string.string_form_lib);
     }
 }
