@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity implements PlusOneFragment.O
         txvPlugin = findViewById(R.id.plugin_txv);
 //        txvPlugin.setText(com.example.baselib.R.string.formlib);
         txvPlugin.setText(R.string.string_form_lib);
-        getSupportFragmentManager().beginTransaction().add(R.id.container_plugina_aty, new PlusOneFragment()).commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.container_plugina_aty, new SimpleFragment()).commit();
     }
 
     @Override
