@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import com.example.plugintest.utils.PluginDataManager;
 import com.example.plugintest.utils.Reflect;
 
 public class MainActivity extends BaseActivity {
@@ -31,7 +32,8 @@ public class MainActivity extends BaseActivity {
     private void initView() {
         txvPlugin = findViewById(R.id.txv_main);
         try {
-            String stringFromPluginA = Reflect.on("com.example.plugina.CodeFromA", mPluginInfo.classLoader)
+            String stringFromPluginA = Reflect.on("com.example.plugina.CodeFromA",
+                    PluginDataManager.getInstance(this).getPluginInfo("plugina.apk").classLoader)
                     .create()
                     .call("methodFromA")
                     .get();
