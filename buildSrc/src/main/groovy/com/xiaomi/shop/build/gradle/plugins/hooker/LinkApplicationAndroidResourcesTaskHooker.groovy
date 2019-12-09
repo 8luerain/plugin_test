@@ -38,9 +38,9 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
-                aaptTask.outputs.getFiles().each {
+        aaptTask.outputs.getFiles().each {
 
-                }
+        }
     }
 
     @Override
@@ -72,7 +72,8 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
-        modifyRFile()
+        reGenerateRText()
+        reGenerateRJava()
         //6：更新zip文件
         reProcessResource(apFile, removedFileList, modifyFileList, aaptResourceDir, task)
     }
@@ -154,7 +155,8 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         }
     }
 
-    private void modifyRFile() {
+
+    private void reGenerateRText() {
         MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
         File rFile = mPluginManifest.originalResourceTxtFile
         rFile.write('')
@@ -168,6 +170,11 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
                 pw.println("${it.vtype} ${it.type} ${it.key} ${it.idStr}")
             }
         }
+    }
+
+    private void reGenerateRJava(File out) {
+        ProjectDataCenter.getInstance(project).pluginPackageManifest.getRJavaFile()
+        ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.generateAarLibRJava2Dir(ShopPlugin.aaptSourceDir)
     }
 
     private void reProcessResource(File ap_org, Set<String> removedFileList, Set<String> modifyFileList

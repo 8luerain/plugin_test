@@ -8,6 +8,9 @@ import com.android.builder.model.Dependencies
 import com.android.builder.model.JavaLibrary
 import com.android.builder.model.SyncIssue
 import com.google.common.collect.ImmutableMap
+import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
+import com.xiaomi.shop.build.gradle.plugins.bean.dependence.AarDependenceInfo
+import com.xiaomi.shop.build.gradle.plugins.bean.dependence.JarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.utils.CommonFactory
 import com.xiaomi.shop.build.gradle.plugins.utils.FileUtil
 import org.gradle.api.Plugin
@@ -21,8 +24,9 @@ import java.util.function.Consumer
 class ShopBasePlugin implements Plugin<Project> {
 
     Project mProject
-    File mHookerDir
-    File aaptResourceDir
+    public static File mHookerDir
+    public static File aaptResourceDir
+    public static File aaptSourceDir
     Instantiator mInstantiator
 
     @Inject
@@ -41,20 +45,21 @@ class ShopBasePlugin implements Plugin<Project> {
         if (!mHookerDir.exists()) {
             mHookerDir.mkdir()
         }
-        aaptResourceDir = new File([mHookerDir, "intermediates", "aapt"].join(File.separator))
+        //存放资源
+        aaptResourceDir = new File([mHookerDir, "intermediates", "resource"].join(File.separator))
         if (aaptResourceDir.exists()) {
             aaptResourceDir.delete()
         }
         aaptResourceDir.mkdir()
-
-        project.afterEvaluate {
-            project.android.applicationVariants.each { ApplicationVariantImpl variant ->
-                generateDependencies(variant)
-            }
+        //存放源码
+        aaptSourceDir = new File([mHookerDir, "intermediates", "source", "r"].join(File.separator))
+        if (aaptSourceDir.exists()) {
+            aaptSourceDir.delete()
         }
+        aaptSourceDir.mkdir()
     }
 
-    def generateDependencies(ApplicationVariantImpl applicationVariant) {
+    def generateDependencies(ApplicationVariantImpl applicationVariant, PackageManifest packageManifest) {
         if (!applicationVariant.buildType.name.equalsIgnoreCase("release")) {
             return
         }
@@ -68,17 +73,31 @@ class ShopBasePlugin implements Plugin<Project> {
             ImmutableMap<String, String> buildMapping =
                     BuildMappingUtils.computeBuildMapping(mProject.getGradle())
 
-            Dependencies dependencies = CommonFactory.getInstance().
-                    getArtifactDependencyGraph(applicationVariant.variantData.scope,
-                            false, buildMapping, consumer)
+            Dependencies dependencies = CommonFactory.getInstance()
+                    .getArtifactDependencyGraph(applicationVariant.variantData.scope, false,
+                            buildMapping, consumer)
 
 
-            dependencies.getJavaLibraries().each { JavaLibrary library ->
-                deps.add(library.name)
+            dependencies.getLibraries().each { AndroidLibrary androidLibrary ->
+                def androidCoordinates = androidLibrary.resolvedCoordinates
+                deps.add(androidLibrary.name)
+                packageManifest.aarDependenciesLibs.add(
+                        new AarDependenceInfo(
+                                androidCoordinates.groupId,
+                                androidCoordinates.artifactId,
+                                androidCoordinates.version,
+                                androidLibrary))
             }
-            dependencies.getLibraries().each { AndroidLibrary library ->
+            dependencies.getJavaLibraries().each { JavaLibrary library ->
 //                println(" dependencies.getLibraries()[${library.name}]")
                 deps.add(library.name)
+                def jarCoordinates = library.resolvedCoordinates
+                packageManifest.jarDependenciesLibs.add(
+                        new JarDependenceInfo(
+                                jarCoordinates.groupId,
+                                jarCoordinates.artifactId,
+                                jarCoordinates.version,
+                                library))
             }
             dependencies.getProjects().each { String path ->
 //                println(" dependencies.getProjects[${path}]")

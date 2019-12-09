@@ -39,11 +39,6 @@ androidx.vectordrawable:vectordrawable:1.1.0@aar
 androidx.versionedparcelable:versionedparcelable:1.1.0@aar
 androidx.viewpager:viewpager:1.0.0@aar
 artifacts::baselib:unspecified@jar
-com.google.android.gms:play-services-audience:17.0.0@aar
-com.google.android.gms:play-services-base:17.0.0@aar
-com.google.android.gms:play-services-basement:17.0.0@aar
-com.google.android.gms:play-services-plus:17.0.0@aar
-com.google.android.gms:play-services-tasks:17.0.0@aar
 com.google.android.material:material:1.0.0@aar
 com.squareup.okhttp3:okhttp:4.2.2@jar
 com.squareup.okio:okio:2.2.2@jar

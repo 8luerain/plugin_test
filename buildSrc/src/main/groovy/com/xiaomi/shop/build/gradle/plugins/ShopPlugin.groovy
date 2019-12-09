@@ -8,7 +8,6 @@ import com.xiaomi.shop.build.gradle.plugins.base.ShopBasePlugin
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import com.xiaomi.shop.build.gradle.plugins.hooker.manager.PluginHookerManager
 import com.xiaomi.shop.build.gradle.plugins.utils.ExtensionApplyUtils
-import com.xiaomi.shop.build.gradle.plugins.utils.Log
 import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
 import com.xiaomi.shop.build.gradle.plugins.utils.Reflect
 import org.gradle.api.Project
@@ -36,8 +35,8 @@ class ShopPlugin extends ShopBasePlugin {
         mAppPlugin = project.plugins.findPlugin(AppPlugin)
         mAndroidExtension = project.getExtensions().findByType(AppExtension)
         injectBaseExtension(project)
-        modifyAndroidExtension()
         initialConfig(project)
+        modifyAndroidExtension()
     }
 
     def injectBaseExtension(Project project) {
@@ -64,21 +63,32 @@ class ShopPlugin extends ShopBasePlugin {
     }
 
     def onPreVariantWork() {
-        Log.i 'mishop', "onPreVariantWork"
-        def hostDependency = ProjectDataCenter.getInstance(mProject).hostPackageManifest
-                .hostDependenciesMap.get("aa")
         ExtensionApplyUtils.applyUseHostResourceConfig(mProject)
     }
 
     void initialConfig(Project project) {
         project.afterEvaluate {
+            PluginConfigExtension extension = project.pluginconfig
             mProject.android.applicationVariants.each { ApplicationVariantImpl variant ->
-                generateDependencies(variant)
+                if (variant.name == "release") {
+                    ProjectDataCenter.getInstance(project).pluginPackageManifest.packageName = variant.applicationId
+                    ProjectDataCenter.getInstance(project).pluginPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
+                    generateDependencies(variant , ProjectDataCenter.getInstance(project).pluginPackageManifest)
+                }
             }
+            //host
             PluginHookerManager manager = new PluginHookerManager(project, mInstantiator)
             manager.registerTaskHookers()
+            Project hostProject = project.getRootProject().getAllprojects().find {
+                it != project.getRootProject() && extension.hostPath.contains(it.name)
+            }
+            hostProject.android.applicationVariants.each { ApplicationVariantImpl variant ->
+                if (variant.name == "release") {
+                    ProjectDataCenter.getInstance(project).hostPackageManifest.packageName = variant.applicationId
+                    ProjectDataCenter.getInstance(project).hostPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
+                    generateDependencies(variant , ProjectDataCenter.getInstance(project).hostPackageManifest)
+                }
+            }
         }
     }
-
-
 }

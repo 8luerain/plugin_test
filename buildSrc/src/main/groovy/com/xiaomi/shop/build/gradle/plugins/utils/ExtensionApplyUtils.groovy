@@ -18,7 +18,7 @@ class ExtensionApplyUtils {
                         resolutionStrategy.eachDependency { DependencyResolveDetails details ->
                             PluginConfigExtension pluginConfigExtension = ProjectDataCenter.getInstance(project).pluginConfigExtension
                             def hostDependency = ProjectDataCenter.getInstance(project).hostPackageManifest
-                                    .hostDependenciesMap.get("${details.requested.group}:${details.requested.name}")
+                                    .dependenciesMap.get("${details.requested.group}:${details.requested.name}")
                             if (hostDependency != null) {
                                 if ("${details.requested.version}" != "${hostDependency['version']}") {
                                     String key = "${p.name}:${details.requested}"

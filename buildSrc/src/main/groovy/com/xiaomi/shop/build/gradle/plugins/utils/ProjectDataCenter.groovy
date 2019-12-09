@@ -41,7 +41,7 @@ class ProjectDataCenter {
     }
 
     PackageManifest getHostPackageManifest() {
-        if (null == pluginPackageManifest) {
+        if (null == hostPackageManifest) {
             hostPackageManifest = new PackageManifest(mProject)
             initHostManifest()
         }
