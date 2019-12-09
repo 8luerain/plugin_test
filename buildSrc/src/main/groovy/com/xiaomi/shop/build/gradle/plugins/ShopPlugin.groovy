@@ -73,8 +73,12 @@ class ShopPlugin extends ShopBasePlugin {
                 if (variant.name == "release") {
                     ProjectDataCenter.getInstance(project).pluginPackageManifest.packageName = variant.applicationId
                     ProjectDataCenter.getInstance(project).pluginPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
-                    generateDependencies(variant , ProjectDataCenter.getInstance(project).pluginPackageManifest)
+                    generateDependencies(variant, ProjectDataCenter.getInstance(project).pluginPackageManifest)
+
                 }
+            }
+            ProjectDataCenter.getInstance(project).pluginPackageManifest.aarDependenciesLibs.each {
+                println(" plugin --- packageManifest.aarDependenciesLibs.each [${it.compareKey}]")
             }
             //host
             PluginHookerManager manager = new PluginHookerManager(project, mInstantiator)
@@ -86,8 +90,12 @@ class ShopPlugin extends ShopBasePlugin {
                 if (variant.name == "release") {
                     ProjectDataCenter.getInstance(project).hostPackageManifest.packageName = variant.applicationId
                     ProjectDataCenter.getInstance(project).hostPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
-                    generateDependencies(variant , ProjectDataCenter.getInstance(project).hostPackageManifest)
+                    generateDependencies(variant, ProjectDataCenter.getInstance(project).hostPackageManifest)
+
                 }
+            }
+            ProjectDataCenter.getInstance(project).hostPackageManifest.aarDependenciesLibs.each {
+                println(" host --- packageManifest.aarDependenciesLibs.each [${it.compareKey}]")
             }
         }
     }

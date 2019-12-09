@@ -9,8 +9,6 @@ import com.google.common.collect.ListMultimap
 import com.google.common.collect.Lists
 import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
 import com.xiaomi.shop.build.gradle.plugins.bean.res.StyleableEntry
-import com.xiaomi.shop.build.gradle.plugins.utils.Log
-
 /**
  * Represents a AAR dependence from Maven repository or Android library module
  *
@@ -42,7 +40,7 @@ class AarDependenceInfo extends DependenceInfo {
 
     @Override
     File getJarFile() {
-        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s jar file: ${library.jarFile}"
+//        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s jar file: ${library.jarFile}"
         return library.jarFile
     }
 
@@ -52,17 +50,17 @@ class AarDependenceInfo extends DependenceInfo {
     }
     
     File getAssetsFolder() {
-        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s assets folder: ${library.assetsFolder}"
+//        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s assets folder: ${library.assetsFolder}"
         return library.assetsFolder
     }
 
     File getJniFolder() {
-        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s jni folder: ${library.jniFolder}"
+//        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s jni folder: ${library.jniFolder}"
         return library.jniFolder
     }
 
     Collection<File> getLocalJars() {
-        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s local jars: ${library.localJars}"
+//        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s local jars: ${library.localJars}"
         return library.localJars
     }
 
@@ -76,7 +74,7 @@ class AarDependenceInfo extends DependenceInfo {
 
         def rSymbol = getFile(library.symbolFile, TaskManager.DIR_BUNDLES, library.projectVariant, SdkConstants.FN_RESOURCE_TEXT)
         if (rSymbol.exists()) {
-            Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s symbol file: ${rSymbol}"
+//            Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s symbol file: ${rSymbol}"
             rSymbol.eachLine { line ->
                 if (!line.empty) {
                     def tokenizer = new StringTokenizer(line)
@@ -99,7 +97,7 @@ class AarDependenceInfo extends DependenceInfo {
      */
     public String getPackage() {
         File manifest = getFile(library.manifest, 'manifests', 'full', library.projectVariant, SdkConstants.ANDROID_MANIFEST_XML)
-        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s manifest file: ${manifest}"
+//        Log.i 'AarDependenceInfo', "Found [${library.resolvedCoordinates}]'s manifest file: ${manifest}"
         def xmlManifest = new XmlParser().parse(manifest)
         return xmlManifest.@package
     }
@@ -111,7 +109,7 @@ class AarDependenceInfo extends DependenceInfo {
                 intermediatesFile = new File(path.substring(0, path.indexOf("${File.separator}intermediates${File.separator}")), 'intermediates')
 
             } catch (Exception e) {
-                Log.e('AarDependenceInfo', "Can not find [${library.resolvedCoordinates}]'s intermediates dir from the path: ${path}")
+//                Log.e('AarDependenceInfo', "Can not find [${library.resolvedCoordinates}]'s intermediates dir from the path: ${path}")
                 intermediatesFile = library.folder
             }
         }

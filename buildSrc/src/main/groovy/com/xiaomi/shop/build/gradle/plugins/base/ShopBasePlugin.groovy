@@ -105,6 +105,7 @@ class ShopBasePlugin implements Plugin<Project> {
 
             }
             Collections.sort(deps)
+
             return deps
         })
 
