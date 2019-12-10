@@ -123,8 +123,7 @@ public class ArscEditor extends AssetEditor {
                 def offsets = []
                 int offset = 0
                 def emptyCount = 0
-                //------------- e  某个具体资源 ------------comment by mao
-                es.each { e ->
+                es.each { e -> //------------- e  某个具体资源 ------------comment by mao
                     if (e.id == ID_DELETED) {
                         // TODO: Add empty entry to default config
                         throw new UnsupportedOperationException("No support deleting resources on lib.* now")

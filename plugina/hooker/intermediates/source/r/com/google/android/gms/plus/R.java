@@ -7,10 +7,10 @@
 package com.google.android.gms.plus;
 public final class R {
     public static final class drawable {
-        public static final int ic_plusone_medium_off_client = 0x11150015;
-        public static final int ic_plusone_small_off_client = 0x11150016;
-        public static final int ic_plusone_standard_off_client = 0x11150017;
-        public static final int ic_plusone_tall_off_client = 0x11150018;
+        public static final int ic_plusone_medium_off_client = 0x11070015;
+        public static final int ic_plusone_small_off_client = 0x11070016;
+        public static final int ic_plusone_standard_off_client = 0x11070017;
+        public static final int ic_plusone_tall_off_client = 0x11070018;
     }
     public static final class styleable {
     }

@@ -57,7 +57,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     void handleResource(LinkApplicationAndroidResourcesTask task) {
         File apFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
-        def aaptResourceDir = project.plugins.findPlugin(ShopPlugin).aaptResourceDir
+        def aaptResourceDir = ShopPlugin.aaptResourceDir
         def removedFileList = [] as HashSet<String> //记录需要删除的文件
         def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改
@@ -66,7 +66,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         removeSameResourceFile(aaptResourceDir, removedFileList)
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
-//        modifyItemOfArscFile(aaptResourceDir, task)
+        modifyItemOfArscFile(aaptResourceDir, task)
 
         //4:处理xml文件，对资源文件的引用
         modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
@@ -74,6 +74,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
         reGenerateRText()
         reGenerateRJava()
+
         //6：更新zip文件
         reProcessResource(apFile, removedFileList, modifyFileList, aaptResourceDir, task)
     }
@@ -134,6 +135,8 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
                 mergeManifest.resourcesMapForAapt)
     }
 
+
+
     private void modifyItemOfXmlFile(File aaptResourceDir, Set<String> modifyFileList) {
         final String unixFileFileSeparator = "/"
         MergedPackageManifest manifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
@@ -172,9 +175,13 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         }
     }
 
-    private void reGenerateRJava(File out) {
+    private void reGenerateRJava() {
         ProjectDataCenter.getInstance(project).pluginPackageManifest.getRJavaFile()
         ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.generateAarLibRJava2Dir(ShopPlugin.aaptSourceDir)
+        project.copy {
+            from ShopPlugin.aaptSourceDir
+            into  mPluginManifest.sourceOutputFileDir
+        }
     }
 
     private void reProcessResource(File ap_org, Set<String> removedFileList, Set<String> modifyFileList
