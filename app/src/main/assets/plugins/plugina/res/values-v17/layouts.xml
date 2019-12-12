@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="layout" name="abc_action_mode_close_item_material">false</item>
+    <item type="layout" name="abc_alert_dialog_button_bar_material">false</item>
+    <item type="layout" name="abc_alert_dialog_title_material">false</item>
+    <item type="layout" name="abc_dialog_title_material">false</item>
+    <item type="layout" name="abc_popup_menu_header_item_layout">false</item>
+    <item type="layout" name="abc_search_view">false</item>
+    <item type="layout" name="abc_select_dialog_material">false</item>
+    <item type="layout" name="abc_tooltip">false</item>
+    <item type="layout" name="design_layout_snackbar_include">false</item>
+    <item type="layout" name="mtrl_layout_snackbar_include">false</item>
+    <item type="layout" name="notification_action">false</item>
+    <item type="layout" name="notification_action_tombstone">false</item>
+    <item type="layout" name="notification_template_big_media">false</item>
+    <item type="layout" name="notification_template_big_media_custom">false</item>
+    <item type="layout" name="notification_template_big_media_narrow">false</item>
+    <item type="layout" name="notification_template_big_media_narrow_custom">false</item>
+    <item type="layout" name="notification_template_custom_big">false</item>
+    <item type="layout" name="notification_template_lines_media">false</item>
+    <item type="layout" name="notification_template_media">false</item>
+    <item type="layout" name="notification_template_media_custom">false</item>
+    <item type="layout" name="select_dialog_multichoice_material">false</item>
+    <item type="layout" name="select_dialog_singlechoice_material">false</item>
+</resources>

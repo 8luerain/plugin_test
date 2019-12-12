@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="anim" name="abc_fade_in">false</item>
+    <item type="anim" name="abc_fade_out">false</item>
+    <item type="anim" name="abc_grow_fade_in_from_bottom">false</item>
+    <item type="anim" name="abc_popup_enter">false</item>
+    <item type="anim" name="abc_popup_exit">false</item>
+    <item type="anim" name="abc_shrink_fade_out_from_bottom">false</item>
+    <item type="anim" name="abc_slide_in_bottom">false</item>
+    <item type="anim" name="abc_slide_in_top">false</item>
+    <item type="anim" name="abc_slide_out_bottom">false</item>
+    <item type="anim" name="abc_slide_out_top">false</item>
+    <item type="anim" name="abc_tooltip_enter">false</item>
+    <item type="anim" name="abc_tooltip_exit">false</item>
+    <item type="anim" name="btn_checkbox_to_checked_box_inner_merged_animation">false</item>
+    <item type="anim" name="btn_checkbox_to_checked_box_outer_merged_animation">false</item>
+    <item type="anim" name="btn_checkbox_to_checked_icon_null_animation">false</item>
+    <item type="anim" name="btn_checkbox_to_unchecked_box_inner_merged_animation">false</item>
+    <item type="anim" name="btn_checkbox_to_unchecked_check_path_merged_animation">false</item>
+    <item type="anim" name="btn_checkbox_to_unchecked_icon_null_animation">false</item>
+    <item type="anim" name="btn_radio_to_off_mtrl_dot_group_animation">false</item>
+    <item type="anim" name="btn_radio_to_off_mtrl_ring_outer_animation">false</item>
+    <item type="anim" name="btn_radio_to_off_mtrl_ring_outer_path_animation">false</item>
+    <item type="anim" name="btn_radio_to_on_mtrl_dot_group_animation">false</item>
+    <item type="anim" name="btn_radio_to_on_mtrl_ring_outer_animation">false</item>
+    <item type="anim" name="btn_radio_to_on_mtrl_ring_outer_path_animation">false</item>
+    <item type="anim" name="design_bottom_sheet_slide_in">false</item>
+    <item type="anim" name="design_bottom_sheet_slide_out">false</item>
+    <item type="anim" name="design_snackbar_in">false</item>
+    <item type="anim" name="design_snackbar_out">false</item>
+</resources>

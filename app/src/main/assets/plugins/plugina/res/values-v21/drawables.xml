@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="drawable" name="abc_btn_colored_material">false</item>
+    <item type="drawable" name="abc_dialog_material_background">false</item>
+    <item type="drawable" name="abc_edit_text_material">false</item>
+    <item type="drawable" name="abc_list_divider_material">false</item>
+    <item type="drawable" name="abc_ratingbar_indicator_material">false</item>
+    <item type="drawable" name="abc_ratingbar_material">false</item>
+    <item type="drawable" name="abc_ratingbar_small_material">false</item>
+    <item type="drawable" name="design_bottom_navigation_item_background">false</item>
+    <item type="drawable" name="design_password_eye">false</item>
+    <item type="drawable" name="$avd_hide_password__0">false</item>
+    <item type="drawable" name="$avd_hide_password__1">false</item>
+    <item type="drawable" name="$avd_hide_password__2">false</item>
+    <item type="drawable" name="$avd_show_password__0">false</item>
+    <item type="drawable" name="$avd_show_password__1">false</item>
+    <item type="drawable" name="$avd_show_password__2">false</item>
+    <item type="drawable" name="abc_action_bar_item_background_material">false</item>
+    <item type="drawable" name="avd_hide_password">false</item>
+    <item type="drawable" name="avd_show_password">false</item>
+    <item type="drawable" name="notification_action_background">false</item>
+</resources>

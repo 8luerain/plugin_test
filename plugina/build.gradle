@@ -3,7 +3,7 @@ apply plugin: 'com.xiaomi.shop.build.gradle.plugin'
 
 android {
     compileSdkVersion 28
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "28.0.3"
 
 
     defaultConfig {

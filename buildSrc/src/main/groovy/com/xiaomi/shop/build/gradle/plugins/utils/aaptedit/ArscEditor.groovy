@@ -66,7 +66,7 @@ public class ArscEditor extends AssetEditor {
         }
 
         // Ensure there is an `attr' typeSpec
-        if (retainedTypes[0].id ==ID_NO_ATTR) { // attr type id is always at first
+        if (retainedTypes[0].id == ID_NO_ATTR) { // attr type id is always at first
             def attrSpec = t.typeList.specs[0]
             attrSpec.entryCount = 0
             attrSpec.configs = []
@@ -89,27 +89,40 @@ public class ArscEditor extends AssetEditor {
         }
 
         // Filter typeSpecs
+        /*[type   : "int",
+           name: resType,
+           id     : parseTypeIdFromResId(firstEntry.resourceId),
+           _id    : parseTypeIdFromResId(firstEntry.newResourceId),
+                       entries: [
+                           name: resEntry.resourceName,
+                           id  : parseEntryIdFromResId(resEntry.resourceId),
+                           _id : parseEntryIdFromResId(resEntry.newResourceId),
+                           v   : resEntry.resourceId, _v: resEntry.newResourceId,
+                           vs  : resEntry.hexResourceId, _vs: resEntry.hexNewResourceId]]
+                        ]
+         */
         //------------- retainedTypes [资源数组]  ------------comment by mao
-        retainedTypes.each {
-            if (it.id == ID_DELETED) {
+        retainedTypes.each { typeEntry ->
+            if (typeEntry.id == ID_DELETED) {
                 // TODO: Add empty entry to default config
                 throw new UnsupportedOperationException("No support deleting resources on lib.* now")
             }
 
-            if (it.id == ID_NO_ATTR) {
+            if (typeEntry.id == ID_NO_ATTR) {
                 return
             }
             //------------- it.id 某[资源类型ID]  string[] ------------comment by mao
-            def specIndex = typeIdMap.get(it.id)
+            def specIndex = typeIdMap.get(typeEntry.id)
+            println("typeEntryName [${typeEntry.name}] --- typeEntry.id [${typeEntry.id}]")
             def ts = t.typeList.specs[specIndex]
             //------------- es  某type下所有资源 ------------comment by mao
-            def es = it.entries
-            def newEntryCount = es.size()
+            def typeEntry_entries = typeEntry.entries
+            def newEntryCount = typeEntry_entries.size()
             def d = (ts.entryCount - newEntryCount) * 4
             ts.entryCount = newEntryCount
             // Filter flags
             def flags = []
-            es.each { e ->
+            typeEntry_entries.each { e ->
                 def flag = (e.id == ID_DELETED) ? 0 : ts.flags[e.id]
                 flags.add(flag)
             }
@@ -123,7 +136,11 @@ public class ArscEditor extends AssetEditor {
                 def offsets = []
                 int offset = 0
                 def emptyCount = 0
-                es.each { e -> //------------- e  某个具体资源 ------------comment by mao
+                println("it.entries.size [${it.entries.size}]")
+                for (int i = 0; i < it.entries.size; i++) {
+                    println("ename [${new String(t.keyStringPool.strings[it.entries[i].key])}]each entry  [${it.entries[i].key}]")
+                }
+                typeEntry_entries.each { e -> //------------- e  某个具体资源 ------------comment by mao
                     if (e.id == ID_DELETED) {
                         // TODO: Add empty entry to default config
                         throw new UnsupportedOperationException("No support deleting resources on lib.* now")
@@ -133,7 +150,6 @@ public class ArscEditor extends AssetEditor {
                     if (entry == null) {
                         throw new Exception("Missing entry at ${e} on ${it}!")
                     }
-
                     entries.add(entry)
                     if (entry.isEmpty()) {
                         offsets.add(-1)
@@ -142,6 +158,7 @@ public class ArscEditor extends AssetEditor {
                     }
 
                     def ename = new String(t.keyStringPool.strings[entry.key]).replaceAll('\\.', '_')
+                    println("srsc tale e.name[${e.name}] e.id[${e.id}] <--enrty [${entry}]--> ename[${ename}] entry.key[${entry.key}]")
                     if (e.name != ename) {
                         throw new Exception("Required entry '${e.name}' but got '$ename', This " +
                                 "is seems to unsupport the buildToolsRevision: ${version}.")
@@ -263,7 +280,7 @@ public class ArscEditor extends AssetEditor {
             lib.entries = []
             t.typeList.lib = lib
         } else {
-            lib.count ++
+            lib.count++
             lib.header.size += LIBRARY_ENTRY_SIZE
         }
         def libEntry = [:]
@@ -282,9 +299,9 @@ public class ArscEditor extends AssetEditor {
                 throw new RuntimeException(err)
             }
 
-            lib.count ++
+            lib.count++
             lib.header.size += LIBRARY_ENTRY_SIZE
-            lib.entries.add([packageId: pid,
+            lib.entries.add([packageId  : pid,
                              packageName: getUtf16String(pname, 256)])
         }
 
@@ -527,12 +544,12 @@ public class ArscEditor extends AssetEditor {
                     println "!!!Unkown type: ${String.format('0x%04x', tt.header.type)}"
                     seek(tellp() - 8)
                     dumpBytes(32)
-                    assert(false)
+                    assert (false)
             }
             offset += tt.header.size
             seek(offset)
         }
-        return [specs:specs, lib:lib]
+        return [specs: specs, lib: lib]
     }
     /** Write 1 x ResTable_lib + (ResTable_typeSpec + ResTable_type x M) x N */
     def writeTypeList(tl) {
@@ -685,7 +702,7 @@ public class ArscEditor extends AssetEditor {
         } else if (type.header.type == ResType.RES_TABLE_TYPE_TYPE) {
             type.isConfig = true
             skip(4) // id(1), res0(1), res1(2)
-            type.entryCount= readInt()
+            type.entryCount = readInt()
             type.entriesStart = readInt()
             skip(mTableConfigSize) // ResTable_type.config: struct ResTable_config
         }
@@ -749,7 +766,7 @@ public class ArscEditor extends AssetEditor {
         def lib = t.typeList.lib
         if (lib != null) {
             println "  DynamicRefTable entryCount=${lib.count}"
-            lib.entries.each{ e ->
+            lib.entries.each { e ->
                 println "    0x${Integer.toHexString(e.packageId)} -> " +
                         "${getUtf8String(e.packageName)}"
             }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="layout" name="design_layout_snackbar">false</item>
+    <item type="layout" name="mtrl_layout_snackbar">false</item>
+</resources>

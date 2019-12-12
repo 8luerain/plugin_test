@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="color" name="abc_btn_colored_borderless_text_material">false</item>
+    <item type="color" name="abc_btn_colored_text_material">false</item>
+    <item type="color" name="abc_tint_btn_checkable">false</item>
+    <item type="color" name="abc_tint_default">false</item>
+    <item type="color" name="abc_tint_edittext">false</item>
+    <item type="color" name="abc_tint_seek_thumb">false</item>
+    <item type="color" name="abc_tint_spinner">false</item>
+    <item type="color" name="abc_tint_switch_track">false</item>
+    <item type="color" name="design_tint_password_toggle">false</item>
+    <item type="color" name="abc_color_highlight_material">false</item>
+</resources>

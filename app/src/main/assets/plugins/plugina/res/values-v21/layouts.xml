@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="layout" name="abc_screen_toolbar">false</item>
+    <item type="layout" name="notification_action">false</item>
+    <item type="layout" name="notification_action_tombstone">false</item>
+    <item type="layout" name="notification_template_custom_big">false</item>
+    <item type="layout" name="notification_template_icon_group">false</item>
+</resources>

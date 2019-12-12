@@ -65,6 +65,8 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         //2：删除res资源文件
         removeSameResourceFile(aaptResourceDir, removedFileList)
 
+        reGenerateRText()
+
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
         modifyItemOfArscFile(aaptResourceDir, task)
 
@@ -72,7 +74,6 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
-        reGenerateRText()
         reGenerateRJava()
 
         //6：更新zip文件
@@ -95,9 +96,6 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     private void removeSameResourceFile(File aaptResourceDir, Set<String> modifyFileList) {
         def typeList = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.resourcesMap.keySet()
-        typeList.each {
-            println("typelist type[${it}]")
-        }
         def resDir = new File(aaptResourceDir, 'res')
         resDir.listFiles().each { typeDir ->
             def type = typeList.find { typeDir.name == it || typeDir.name.startsWith("${it}-") }

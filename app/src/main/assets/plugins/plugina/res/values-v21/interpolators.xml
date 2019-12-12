@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="interpolator" name="mtrl_fast_out_linear_in">false</item>
+    <item type="interpolator" name="mtrl_fast_out_slow_in">false</item>
+    <item type="interpolator" name="mtrl_linear_out_slow_in">false</item>
+</resources>

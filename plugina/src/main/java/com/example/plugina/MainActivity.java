@@ -19,6 +19,8 @@ public class MainActivity extends AppCompatActivity implements PlusOneFragment.O
         txvPlugin = findViewById(R.id.plugin_txv);
 //        txvPlugin.setText(com.example.baselib.R.string.formlib);
         txvPlugin.setText(R.string.string_form_lib);
+        txvPlugin.setText(com.wx.goodview.R.color.highlighted_text_material_dark);
+        txvPlugin.setText(com.example.baselib.R.color.highlighted_text_material_dark);
         getSupportFragmentManager().beginTransaction().add(R.id.container_plugina_aty, new SimpleFragment()).commit();
     }
 

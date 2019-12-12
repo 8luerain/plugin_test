@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="drawable" name="ic_launcher_background">false</item>
+    <item type="drawable" name="design_ic_visibility">false</item>
+    <item type="drawable" name="design_ic_visibility_off">false</item>
+</resources>
