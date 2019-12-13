@@ -34,12 +34,18 @@ public class ArscEditor extends AssetEditor {
     private static def LIBRARY_CHUNK_SIZE = 272 // ResTable_lib_header & ResTable_lib_entry
     private static def TABLE_SIZE_POS = 4
 
+
+    //aapt27以上时,size改为64字节
     private int mTableConfigSize = 52 // sizeof(ResTable_config)
+
 
     ArscEditor(File file, def v) {
         super(file, v)
         if (version != null && version.major >= 24) {
             mTableConfigSize = 56
+        }
+        if (version != null && version.major >= 27) { //add by mao ,fix 27version error
+            mTableConfigSize = 64
         }
     }
 
@@ -113,7 +119,6 @@ public class ArscEditor extends AssetEditor {
             }
             //------------- it.id 某[资源类型ID]  string[] ------------comment by mao
             def specIndex = typeIdMap.get(typeEntry.id)
-            println("typeEntryName [${typeEntry.name}] --- typeEntry.id [${typeEntry.id}]")
             def ts = t.typeList.specs[specIndex]
             //------------- es  某type下所有资源 ------------comment by mao
             def typeEntry_entries = typeEntry.entries
@@ -136,10 +141,6 @@ public class ArscEditor extends AssetEditor {
                 def offsets = []
                 int offset = 0
                 def emptyCount = 0
-                println("it.entries.size [${it.entries.size}]")
-                for (int i = 0; i < it.entries.size; i++) {
-                    println("ename [${new String(t.keyStringPool.strings[it.entries[i].key])}]each entry  [${it.entries[i].key}]")
-                }
                 typeEntry_entries.each { e -> //------------- e  某个具体资源 ------------comment by mao
                     if (e.id == ID_DELETED) {
                         // TODO: Add empty entry to default config
@@ -515,6 +516,14 @@ public class ArscEditor extends AssetEditor {
                     tt.entriesSize = 0
                     for (int i = 0; i < tt.entryCount; i++) {
                         int pos = tt.entryOffsets[i]
+                        if ("${tt.id}" == "4" || "${tt.id}" == "12") {
+                            println("every item  tt.entryCount [${tt.entryCount}] i[${i}] type_id[${tt.id}] offset [${pos}]")
+//                            try {
+//                                throw new IllegalAccessException("temp")
+//                            } catch (Exception e) {
+//                                println(e)
+//                            }
+                        }
                         if (pos == -1) {
                             tt.entries.add([:])
                             continue
@@ -648,7 +657,8 @@ public class ArscEditor extends AssetEditor {
     /** Read struct ResTable_config */
     def readTableConfig() {
         def c = [:]
-//        c.size = readInt()
+        c.size = readInt()
+        mTableConfigSize = c.size
 //        c.imsi = [:]
 //        c.imsi.mcc = readShort()
 //        c.imsi.mnc = readShort()
@@ -683,7 +693,7 @@ public class ArscEditor extends AssetEditor {
 //        c.screenConfig2.screenLayout2 = readByte()
 //        c.screenConfig2.screenConfigPad1 = readByte()
 //        c.screenConfig2.screenConfigPad2 = readShort()
-        c.ignored = readBytes(mTableConfigSize)
+        c.ignored = readBytes(c.size - 4)
         return c
     }
     /** Write struct ResTable_config */
