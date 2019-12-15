@@ -49,6 +49,7 @@ public class CppHexEditor {
      *  c++: little endian
      *  java: big endian
      */
+
     protected byte readByte() {
         return this.raf.readByte()
     }
@@ -80,6 +81,15 @@ public class CppHexEditor {
     protected int readInt() {
         def buffer = readBytes(4)
         ByteBuffer bb = ByteBuffer.wrap(buffer)
+        bb.order(ByteOrder.LITTLE_ENDIAN)
+        return bb.getInt()
+    }
+
+    protected int convert2Int(byte[] bytes) {
+        if (bytes.size() != 4) {
+            throw new IllegalArgumentException("convert byte to int error , int bytes size must be 4")
+        }
+        ByteBuffer bb = ByteBuffer.wrap(bytes)
         bb.order(ByteOrder.LITTLE_ENDIAN)
         return bb.getInt()
     }

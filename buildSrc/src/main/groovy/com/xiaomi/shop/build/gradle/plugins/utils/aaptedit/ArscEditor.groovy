@@ -1,7 +1,7 @@
 package com.xiaomi.shop.build.gradle.plugins.utils.aaptedit
-
 /**
  * Class to edit aapt-generated resources.arsc file
+ * modify by mao ， 增加了动态计算config size的逻辑，适应aapt版本变化
  */
 public class ArscEditor extends AssetEditor {
     public static final int ID_DELETED = -1
@@ -13,17 +13,17 @@ public class ArscEditor extends AssetEditor {
      *  +-----------------------+
      *  | Res string pool       |
      *  +-----------------------+
-     *  | Package Header        | <-- rewrite entry 1: package id
+     *  | Package Header        | <-- rewrite entryTable 1: package id
      *  +-----------------------+
      *  | Type strings          |
      *  +-----------------------+
      *  | Key strings           |
      *  +-----------------------+
-     *  | DynamicRefTable chunk | <-- insert entry (for 5.0+)
+     *  | DynamicRefTable chunk | <-- insert entryTable (for 5.0+)
      *  +-----------------------+
      *  | Type spec             |
      *  |                  * N  |
-     *  | Type info  * M        | <-- rewrite entry 2: entry value
+     *  | Type info  * M        | <-- rewrite entryTable 2: entryTable value
      *  +-----------------------+
      */
 
@@ -91,6 +91,7 @@ public class ArscEditor extends AssetEditor {
         // Create the mapping of type ids
         LinkedHashMap<Object, Integer> typeIdMap = new LinkedHashMap<>()
         t.typeList.specs.eachWithIndex { it, i ->
+            println(" t.typeList.specs.eachWithIndex typeID[${it.id.intValue()}] , index[${i}]")
             typeIdMap.put(it.id.intValue(), i)
         }
 
@@ -110,7 +111,7 @@ public class ArscEditor extends AssetEditor {
         //------------- retainedTypes [资源数组]  ------------comment by mao
         retainedTypes.each { typeEntry ->
             if (typeEntry.id == ID_DELETED) {
-                // TODO: Add empty entry to default config
+                // TODO: Add empty entryTable to default config
                 throw new UnsupportedOperationException("No support deleting resources on lib.* now")
             }
 
@@ -119,6 +120,7 @@ public class ArscEditor extends AssetEditor {
             }
             //------------- it.id 某[资源类型ID]  string[] ------------comment by mao
             def specIndex = typeIdMap.get(typeEntry.id)
+            println("typeEntry.name [${typeEntry.name}]  typeEntry.id [${typeEntry.id}]  specIndex [${specIndex}]")
             def ts = t.typeList.specs[specIndex]
             //------------- es  某type下所有资源 ------------comment by mao
             def typeEntry_entries = typeEntry.entries
@@ -136,71 +138,74 @@ public class ArscEditor extends AssetEditor {
             ts.id = retainedTypeSpecs.size() + 1
             // Filter config entries
             def configs = []
+            println("ts.configs size [${ts.configs.size}]")
             ts.configs.each {
                 def entries = []
                 def offsets = []
                 int offset = 0
                 def emptyCount = 0
-                typeEntry_entries.each { e -> //------------- e  某个具体资源 ------------comment by mao
-                    if (e.id == ID_DELETED) {
-                        // TODO: Add empty entry to default config
+                typeEntry_entries.each { entryInput -> //------------- entryInput  某个具体资源 ------------comment by mao
+                    if (entryInput.id == ID_DELETED) {
+                        // TODO: Add empty entryTable to default config
                         throw new UnsupportedOperationException("No support deleting resources on lib.* now")
                     }
-                    //------------- e.id  某个[具体资源id] ------------comment by mao
-                    def entry = it.entries[e.id] //因为id顺序排放，所以可以找到对应某个资源实体
-                    if (entry == null) {
-                        throw new Exception("Missing entry at ${e} on ${it}!")
+                    //------------- entryInput.id  某个[具体资源id] ------------comment by mao
+                    def entryTable = it.entries[entryInput.id] //因为id顺序排放，所以可以找到对应某个资源实体
+                    if (entryTable == null) {
+                        throw new Exception("Missing entryTable at ${entryInput} on ${it}!")
                     }
-                    entries.add(entry)
-                    if (entry.isEmpty()) {
+                    entries.add(entryTable)
+                    if (entryTable.isEmpty()) {
                         offsets.add(-1)
                         emptyCount++
                         return
                     }
 
-                    def ename = new String(t.keyStringPool.strings[entry.key]).replaceAll('\\.', '_')
-                    println("srsc tale e.name[${e.name}] e.id[${e.id}] <--enrty [${entry}]--> ename[${ename}] entry.key[${entry.key}]")
-                    if (e.name != ename) {
-                        throw new Exception("Required entry '${e.name}' but got '$ename', This " +
+                    def eTablename = new String(t.keyStringPool.strings[entryTable.key]).replaceAll('\\.', '_')
+                    println("srsc tale entryInput.name[${entryInput.name}] entryInput.id[${entryInput.id}] <--enrty [${entryTable}]--> eTablename[${eTablename}] entryTable.key[${entryTable.key}]")
+                    if (entryInput.name != eTablename) {
+                        throw new Exception("Required entryTable '${entryInput.name}' but got '$eTablename', This " +
                                 "is seems to unsupport the buildToolsRevision: ${version}.")
                     }
 
                     offsets.add(offset)
-                    offset += entry.allSize
-                    if (!retainedKeyIds.contains(entry.key)) retainedKeyIds.add(entry.key)
-                    retainedEntries.add(entry)
+                    offset += entryTable.allSize
+                    if (!retainedKeyIds.contains(entryTable.key)) {
+                        retainedKeyIds.add(entryTable.key)
+                    }
+                    retainedEntries.add(entryTable)
                     int dataType
-                    if (entry.value != null) {
-                        // Reset entry ids
-                        dataType = entry.value.dataType
+                    if (entryTable.value != null) {
+                        // Reset entryTable ids
+                        dataType = entryTable.value.dataType
                         if (dataType == ResValueDataType.TYPE_STRING) {
                             // String reference
-                            def oldId = entry.value.data
+                            def oldId = entryTable.value.data
                             def newId = retainedStringIds.indexOf(oldId)
                             if (newId < 0) {
                                 retainedStringIds.add(oldId)
                                 newId = retainedStringIds.size() - 1
                             }
-                            entry.value.data = newId
+                            entryTable.value.data = newId
                         } else if (dataType == ResValueDataType.TYPE_REFERENCE) {
-                            def id = idMaps.get(entry.value.data)
+                            def id = idMaps.get(entryTable.value.data)
                             if (id != null) {
                                 if (DEBUG_NOISY) println "\t -- map ResTable_entry.value: " +
-                                        "${String.format('0x%08x', entry.value.data)} -> " +
+                                        "${String.format('0x%08x', entryTable.value.data)} -> " +
                                         "${String.format('0x%08x', id)}"
-                                entry.value.data = id
+                                entryTable.value.data = id
                             }
                         }
-                    } else if (entry.maps != null) {
-                        // Reset entry parent
-                        def id = idMaps.get(entry.parent)
+                    } else if (entryTable.maps != null) {
+                        // Reset entryTable parent
+                        def id = idMaps.get(entryTable.parent)
                         if (id != null) {
                             if (DEBUG_NOISY) println "\t -- map ResTable_map_entry.parent: " +
-                                    "${String.format('0x%08x', entry.parent)} -> " +
+                                    "${String.format('0x%08x', entryTable.parent)} -> " +
                                     "${String.format('0x%08x', id)}"
-                            entry.parent = id
+                            entryTable.parent = id
                         }
-                        entry.maps.each {
+                        entryTable.maps.each {
                             // Reset map ids
                             id = idMaps.get(it.name)
                             if (id != null) {
@@ -250,10 +255,10 @@ public class ArscEditor extends AssetEditor {
 
             ts.configs = configs
             retainedTypeSpecs.add(ts)
-            retainedTypeIds.add(it.id - 1)
+            retainedTypeIds.add(typeEntry.id - 1)
         }
 
-        // Reset entry keys (reference to keyStringPool index)
+        // Reset entryTable keys (reference to keyStringPool index)
         def keyMaps = [:]
         retainedKeyIds.eachWithIndex { key, newKey ->
             keyMaps.put(key, newKey)
@@ -516,14 +521,14 @@ public class ArscEditor extends AssetEditor {
                     tt.entriesSize = 0
                     for (int i = 0; i < tt.entryCount; i++) {
                         int pos = tt.entryOffsets[i]
-                        if ("${tt.id}" == "4" || "${tt.id}" == "12") {
-                            println("every item  tt.entryCount [${tt.entryCount}] i[${i}] type_id[${tt.id}] offset [${pos}]")
+//                        if ("${tt.id}" == "4" || "${tt.id}" == "12") {
+//                            println("every item  tt.entryCount [${tt.entryCount}] i[${i}] type_id[${tt.id}] offset [${pos}]")
 //                            try {
 //                                throw new IllegalAccessException("temp")
-//                            } catch (Exception e) {
-//                                println(e)
+//                            } catch (Exception entryInput) {
+//                                println(entryInput)
 //                            }
-                        }
+//                        }
                         if (pos == -1) {
                             tt.entries.add([:])
                             continue
@@ -657,8 +662,16 @@ public class ArscEditor extends AssetEditor {
     /** Read struct ResTable_config */
     def readTableConfig() {
         def c = [:]
-        c.size = readInt()
-        mTableConfigSize = c.size
+        //改为动态就算，适应以后变化 edit by mao
+//        byte[] sizeBytes = readBytes(4)
+//        c.size = convert2Int(sizeBytes)
+//        mTableConfigSize = c.size
+//        byte[] configAll = new byte[mTableConfigSize]
+//        System.arraycopy(sizeBytes, 0, configAll, 0, sizeBytes.size())
+//        byte[] other = readBytes(c.size - 4);
+//        System.arraycopy(other, 0, configAll, sizeBytes.size(), other.size())
+//        c.ignored = configAll
+
 //        c.imsi = [:]
 //        c.imsi.mcc = readShort()
 //        c.imsi.mnc = readShort()
@@ -693,7 +706,7 @@ public class ArscEditor extends AssetEditor {
 //        c.screenConfig2.screenLayout2 = readByte()
 //        c.screenConfig2.screenConfigPad1 = readByte()
 //        c.screenConfig2.screenConfigPad2 = readShort()
-        c.ignored = readBytes(c.size - 4)
+        c.ignored = readBytes(mTableConfigSize)
         return c
     }
     /** Write struct ResTable_config */

@@ -11,10 +11,7 @@ import com.xiaomi.shop.build.gradle.plugins.utils.ExtensionApplyUtils
 import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
 import com.xiaomi.shop.build.gradle.plugins.utils.Reflect
 import org.gradle.api.Project
-import org.gradle.internal.reflect.Instantiator
-import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 
-import javax.inject.Inject
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -24,19 +21,17 @@ class ShopPlugin extends ShopBasePlugin {
     AppPlugin mAppPlugin
     AppExtension mAndroidExtension
 
-    @Inject
-    ShopPlugin(Instantiator instantiator, ToolingModelBuilderRegistry registry) {
-        super(instantiator, registry)
-    }
-
     @Override
     void apply(Project project) {
         super.apply(project)
+        println("ShopPlugin apply()")
         mAppPlugin = project.plugins.findPlugin(AppPlugin)
         mAndroidExtension = project.getExtensions().findByType(AppExtension)
         injectBaseExtension(project)
-        initialConfig(project)
+        createAaptWorkspace()
+        ProjectDataCenter.init(project).needRefresh = true
         modifyAndroidExtension()
+        initialConfig(project)
     }
 
     def injectBaseExtension(Project project) {
@@ -53,50 +48,55 @@ class ShopPlugin extends ShopBasePlugin {
                     @Override
                     Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         if ('preVariantWork' == method.name) {
-                            onPreVariantWork()
+                            project.gradle.startParameter.taskNames.each {
+                                println("project.gradle.startParameter.taskNames.each projectname[${project.name}] [${it}]")
+                            }
+                            ExtensionApplyUtils.applyUseHostResourceConfig(mProject)
                         }
                         return method.invoke(delegate, args)
                     }
                 })
         reflect.set('variantFactory', variantFactory)
-
     }
 
-    def onPreVariantWork() {
-        ExtensionApplyUtils.applyUseHostResourceConfig(mProject)
+    @Override
+    protected onBeforePreBuildTask() {
     }
 
     void initialConfig(Project project) {
         project.afterEvaluate {
             PluginConfigExtension extension = project.pluginconfig
+            ProjectDataCenter projectDataCenter = ProjectDataCenter.getInstance(project)
             mProject.android.applicationVariants.each { ApplicationVariantImpl variant ->
                 if (variant.name == "release") {
-                    ProjectDataCenter.getInstance(project).pluginPackageManifest.packageName = variant.applicationId
-                    ProjectDataCenter.getInstance(project).pluginPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
-                    generateDependencies(variant, ProjectDataCenter.getInstance(project).pluginPackageManifest)
-
+                    projectDataCenter.pluginPackageManifest.packageName = variant.applicationId
+                    projectDataCenter.pluginPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
+                    println("pluginPackageManifest.packageName[${projectDataCenter.pluginPackageManifest.packageName}]")
+                    println("pluginPackageManifest.packagePath[${projectDataCenter.pluginPackageManifest.packagePath}]")
+                    generateDependencies(variant, projectDataCenter.pluginPackageManifest)
                 }
             }
-            ProjectDataCenter.getInstance(project).pluginPackageManifest.aarDependenciesLibs.each {
-                println(" plugin --- packageManifest.aarDependenciesLibs.each [${it.compareKey}]")
-            }
+//            projectDataCenter.pluginPackageManifest.aarDependenciesLibs.each {
+//                println(" plugin --- packageManifest.aarDependenciesLibs.each [${it.compareKey}]")
+//            }
             //host
-            PluginHookerManager manager = new PluginHookerManager(project, mInstantiator)
-            manager.registerTaskHookers()
             Project hostProject = project.getRootProject().getAllprojects().find {
                 it != project.getRootProject() && extension.hostPath.contains(it.name)
             }
             hostProject.android.applicationVariants.each { ApplicationVariantImpl variant ->
                 if (variant.name == "release") {
-                    ProjectDataCenter.getInstance(project).hostPackageManifest.packageName = variant.applicationId
-                    ProjectDataCenter.getInstance(project).hostPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
-                    generateDependencies(variant, ProjectDataCenter.getInstance(project).hostPackageManifest)
+                    projectDataCenter.hostPackageManifest.packageName = variant.applicationId
+                    projectDataCenter.hostPackageManifest.packagePath = variant.applicationId.replace('.'.charAt(0), File.separatorChar)
+                    generateDependencies(variant, projectDataCenter.hostPackageManifest)
 
                 }
             }
-            ProjectDataCenter.getInstance(project).hostPackageManifest.aarDependenciesLibs.each {
-                println(" host --- packageManifest.aarDependenciesLibs.each [${it.compareKey}]")
-            }
+//            projectDataCenter.hostPackageManifest.aarDependenciesLibs.each {
+//                println(" host --- packageManifest.aarDependenciesLibs.each [${it.compareKey}]")
+//            }
+
+            PluginHookerManager manager = new PluginHookerManager(project)
+            manager.registerTaskHookers()
         }
     }
 }

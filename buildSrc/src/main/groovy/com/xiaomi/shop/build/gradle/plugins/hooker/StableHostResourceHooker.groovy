@@ -3,6 +3,7 @@ package com.xiaomi.shop.build.gradle.plugins.hooker
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
+import com.xiaomi.shop.build.gradle.plugins.utils.Log
 import com.xiaomi.shop.build.gradle.plugins.utils.ResourceFormatUtils
 import org.gradle.api.Project
 
@@ -12,7 +13,6 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
     File mStableOutputFile
     File mStableInputFile
     AppExtension mAndroidExtension
-    File mHookerDir
 
     @Override
     String getTaskName() {
@@ -22,27 +22,12 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
     StableHostResourceHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
         apkVariant.applicationId
-        mHookerDir = project.file('hooker')
-        if (!mHookerDir.exists()) {
-            mHookerDir.mkdir()
-        }
-        mStableOutputFile = new File([mHookerDir, sFileOutputName].join(File.separator))
-        mStableInputFile = new File([mHookerDir, sFileInputName].join(File.separator))
+//        mStableOutputFile = new File([ShopBasePlugin.mHookerDir, sFileOutputName].join(File.separator))
+        mStableInputFile = new File([project.ext.hookerDir, sFileInputName].join(File.separator))
         mAndroidExtension = project.getExtensions().findByType(AppExtension.class)
 //        configStableParam()
     }
 
-    void configStableParam() {
-//        if (mStableOutputFile.exists()) {
-//            Log.i "ProcessResourcesHooker", "${mStableOutputFile} not exist , generate it."
-//            mStableOutputFile.delete()
-//        }
-//        mStableOutputFile.createNewFile()
-        if (mStableInputFile.exists()) {
-            mAndroidExtension.aaptOptions.additionalParameters("--stable-ids", "${mStableInputFile}")
-        }
-//        mAndroidExtension.aaptOptions.additionalParameters("--emit-ids", "${mStableOutputFile}")
-    }
 
     void configStableParamFromTask(LinkApplicationAndroidResourcesTask task) {
 //        if (mStableOutputFile.exists()) {
@@ -59,25 +44,26 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask linkAndroidResForBundleTask) {
-        println("projectname[$project.name] , taskname[${linkAndroidResForBundleTask.name}], " +
-                "taskclass[${linkAndroidResForBundleTask.class.name}]")
+        Log.i("StableHostResourceHooker" , "beforeTaskExecute")
         configStableParamFromTask(linkAndroidResForBundleTask)
     }
 
     @Override
     void afterTaskExecute(LinkApplicationAndroidResourcesTask linkAndroidResForBundleTask) {
-        if (mStableOutputFile.exists()) {
-            mStableOutputFile.delete()
-        }
+        Log.i("StableHostResourceHooker" , "afterTaskExecute")
+//        if (mStableOutputFile.exists()) {
+//            mStableOutputFile.delete()
+//        }
         if (mStableInputFile.exists()) {
             mStableInputFile.delete()
         }
-        ResourceFormatUtils.convertRFile2Stable(apkVariant.applicationId,linkAndroidResForBundleTask.textSymbolOutputFile, mStableOutputFile)
-        project.copy {
-            from mStableOutputFile
-            into mStableOutputFile.getParentFile()
-            rename { sFileInputName }
-        }
-        mStableOutputFile.delete()
+        ResourceFormatUtils.convertRFile2Stable(apkVariant.applicationId,
+                linkAndroidResForBundleTask.textSymbolOutputFile, mStableInputFile)
+//        project.copy {
+//            from mStableOutputFile
+//            into mStableOutputFile.getParentFile()
+//            rename { sFileInputName }
+//        }
+//        mStableOutputFile.delete()
     }
 }

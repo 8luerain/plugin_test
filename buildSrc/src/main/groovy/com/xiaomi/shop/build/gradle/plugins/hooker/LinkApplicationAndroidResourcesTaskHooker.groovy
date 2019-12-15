@@ -6,7 +6,6 @@ import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.sdklib.BuildToolInfo
 import com.google.common.io.Files
-import com.xiaomi.shop.build.gradle.plugins.ShopPlugin
 import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
@@ -57,7 +56,10 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     void handleResource(LinkApplicationAndroidResourcesTask task) {
         File apFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
-        def aaptResourceDir = ShopPlugin.aaptResourceDir
+        File aaptResourceDir = project.ext.aaptResourceDir
+        if (aaptResourceDir.exists()) {
+            aaptResourceDir.deleteDir()
+        }
         def removedFileList = [] as HashSet<String> //记录需要删除的文件
         def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改
@@ -68,7 +70,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         reGenerateRText()
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
-        modifyItemOfArscFile(aaptResourceDir, task)
+        modifyItemOfArscFile(aaptResourceDir, task ,modifyFileList)
 
         //4:处理xml文件，对资源文件的引用
         modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
@@ -124,10 +126,12 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         }
     }
 
-    private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task) {
+    private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task , Set<String> modifyFileList) {
         MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
         def libRefTable = ["${mergeManifest.packageId}": task.applicationId]
+        println("libRefTable [${libRefTable}]")
         final File arscFile = new File(aaptResourceDir, 'resources.arsc')
+        modifyFileList.add("resources.arsc")
         final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsRevision)
         arscEditor.slice(mergeManifest.packageId, mergeManifest.resIdMapForArsc, libRefTable,
                 mergeManifest.resourcesMapForAapt)
@@ -174,10 +178,14 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
     }
 
     private void reGenerateRJava() {
+        File sourceDir = project.ext.aaptSourceDir;
+        if (sourceDir.exists()) {
+            sourceDir.deleteDir()
+        }
         ProjectDataCenter.getInstance(project).pluginPackageManifest.getRJavaFile()
-        ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.generateAarLibRJava2Dir(ShopPlugin.aaptSourceDir)
+        ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.generateAarLibRJava2Dir()
         project.copy {
-            from ShopPlugin.aaptSourceDir
+            from project.ext.aaptSourceDir
             into  mPluginManifest.sourceOutputFileDir
         }
     }

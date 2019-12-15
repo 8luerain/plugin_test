@@ -30,6 +30,7 @@ class MergedPackageManifest extends PackageManifest {
         mHostManifest = input
         mPluginManifest = source
         packageId = mProject.getExtensions().findByType(PluginConfigExtension).packageId
+        println("packageIdpackageIdpackageId [${Integer.toHexString(packageId)}]")
     }
 
     Collection<DependenceInfo> getStripDependencies() {
@@ -101,9 +102,10 @@ class MergedPackageManifest extends PackageManifest {
 
 
     //生成依赖aar库对应的R.java文件
-    def generateAarLibRJava2Dir(File destDir) {
+    def generateAarLibRJava2Dir() {
         getRetainedAarLibs().each { aarDep ->
-            File rJava = new File([destDir, aarDep.package.replace('.'.charAt(0), File.separatorChar), "R.java"].join(File.separator))
+            File rJava = new File([mProject.ext.aaptSourceDir, aarDep.package.replace('.'.charAt(0), File.separatorChar), "R.java"].join(File.separator))
+            println("generateAarLibRJava2Dir [${rJava}]")
             generateRJavaInner(rJava, aarDep.package, aarDep.aarResources, aarDep.aarStyleables)
         }
     }
@@ -129,8 +131,23 @@ class MergedPackageManifest extends PackageManifest {
         def host = mHostManifest.resourcesMap
         if (mMergedResourcesMap == null) {
             mMergedResourcesMap = ArrayListMultimap.create()
-            plugin.keySet().each { key ->
-                int newResIndex = 0
+            def resourceIdList = []
+            plugin.keySet().each { String resType ->
+                List<ResourceEntry> entryList = plugin.get(resType)
+                resourceIdList.add([resType: resType, typeId: entryList.empty ? -1
+                        : parseTypeIdFromResId(entryList.first().resourceId)])
+            }
+
+            resourceIdList.sort { t1, t2 ->
+                t1.typeId - t2.typeId
+            }
+            Set<String> typeSet = [] as Set
+            resourceIdList.each { resourceEntry ->
+                if (resourceEntry.typeId < 0) {
+                    return
+                }
+                String key = resourceEntry.resType
+                int entryId = 0
                 plugin.get(key).each {
                     def index = host.get(it.resourceType).indexOf(it)
                     if (index >= 0) {//相同的
@@ -140,12 +157,13 @@ class MergedPackageManifest extends PackageManifest {
                         host.get(it.resourceType).set(index, it)
                     } else {
                         //重新排序
-                        it.setNewResourceId(packageId, parseTypeIdFromResId(it.resourceId), newResIndex++)
+                        typeSet.add(key)
+                        println("newTypeIdnewTypeId [${typeSet.size()}]")
+                        it.setNewResourceId(packageId, typeSet.size(), entryId++)
                         mMergedResourcesMap.put(it.resourceType, it)
                     }
                 }
             }
-
         }
 
         return mMergedResourcesMap

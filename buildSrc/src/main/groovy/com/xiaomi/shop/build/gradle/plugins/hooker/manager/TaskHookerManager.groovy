@@ -7,7 +7,6 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
-import org.gradle.internal.reflect.Instantiator
 
 public abstract class TaskHookerManager {
 
@@ -15,13 +14,11 @@ public abstract class TaskHookerManager {
 
     protected Project mProject
     protected AppExtension android
-    protected Instantiator instantiator
 
-    public TaskHookerManager(Project mProject, Instantiator instantiator) {
-        this.mProject = mProject
-        this.instantiator = instantiator
-        android = mProject.extensions.findByType(AppExtension)
-        mProject.gradle.addListener(new VirtualApkTaskListener())
+    public TaskHookerManager(Project project) {
+        this.mProject = project
+        android = project.extensions.findByType(AppExtension)
+        project.gradle.addListener(new MishopTaskListener())
     }
 
     public abstract void registerTaskHookers()
@@ -29,6 +26,12 @@ public abstract class TaskHookerManager {
     protected void registerTaskHooker(GradleTaskHooker taskHooker) {
         taskHooker.setTaskHookerManager(this)
         taskHookerMap.put(taskHooker.taskName, taskHooker)
+//        println("registerTaskHooker name[${taskHooker.class.name}]")
+//        try {
+//            throw new IllegalArgumentException("registerTaskHooker")
+//        } catch (Exception e) {
+//            println(e.stackTrace.toString().replace(','.charAt(0),'\n'.charAt(0)))
+//        }
     }
 
 
@@ -37,7 +40,7 @@ public abstract class TaskHookerManager {
     }
 
 
-    private class VirtualApkTaskListener implements TaskExecutionListener {
+    private class MishopTaskListener implements TaskExecutionListener {
 
         @Override
         void beforeExecute(Task task) {
@@ -78,7 +81,7 @@ public abstract class TaskHookerManager {
             record.each {
                 println(it)
             }
-//            FileUtil.saveFile(mProject.getRootDir(), "allTaskInputAndOutput",
+//            FileUtil.saveFile(project.getRootDir(), "allTaskInputAndOutput",
 //                    {
 //                        return record
 //                    })

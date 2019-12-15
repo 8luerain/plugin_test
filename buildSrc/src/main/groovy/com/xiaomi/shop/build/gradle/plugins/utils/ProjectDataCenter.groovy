@@ -1,17 +1,17 @@
 package com.xiaomi.shop.build.gradle.plugins.utils
 
-
 import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
+
 /**
  * 汇总处理host和工程中各个plugin和lib的数据中心，通信中心
  *
  * */
 class ProjectDataCenter {
-    static sInstance
+    static ProjectDataCenter sInstance
 
     private Project mProject
     private PluginConfigExtension mPluginConfigExtension
@@ -20,9 +20,14 @@ class ProjectDataCenter {
     private PackageManifest pluginPackageManifest
     private MergedPackageManifest mergedPluginPackageManifest
 
+    //refresh 是否刷新上次运行数据， 在重新运行plugin时，设为true
+    private boolean hostNeedRefresh
+    private boolean pluginNeedRefresh
+    private boolean mergedPluginNeedRefresh
 
-    private boolean hasParse
-
+    static ProjectDataCenter init(Project project) {
+        return getInstance(project)
+    }
 
     static ProjectDataCenter getInstance(Project project) {
         if (null == sInstance) {
@@ -40,16 +45,60 @@ class ProjectDataCenter {
         mPluginConfigExtension = mProject.pluginconfig;
     }
 
+    Project getProject() {
+        return mProject
+    }
+
+    void setProject(Project project) {
+        this.mProject = mProject
+    }
+
+    boolean getNeedRefresh() {
+        return needRefresh
+    }
+
+    void setNeedRefresh(boolean needRefresh) {
+        println("need data center refresh !!")
+        this.hostNeedRefresh = needRefresh
+        this.pluginNeedRefresh = needRefresh
+        this.mergedPluginNeedRefresh = needRefresh
+    }
+
     PackageManifest getHostPackageManifest() {
-        if (null == hostPackageManifest) {
+        if (null == hostPackageManifest || hostNeedRefresh) {
+            hostNeedRefresh = false
             hostPackageManifest = new PackageManifest(mProject)
             initHostManifest()
         }
         return hostPackageManifest
     }
 
+    def initHostManifest() {
+        String targetHost = mPluginConfigExtension.hostPath
+        if (!targetHost) {
+            def err = new StringBuilder('\n需要指定host路径 targetHost = ../xxxProject/app \n')
+            throw new InvalidUserDataException(err.toString())
+        }
+        File hostLocalDir = new File(targetHost)
+        if (!hostLocalDir.exists()) {
+            def err = "此路径不存在: ${hostLocalDir.canonicalPath}"
+            throw new InvalidUserDataException(err)
+        }
+        File hostR = new File(hostLocalDir, "hooker/original_resource_file.txt")
+        File hostDependencies = new File(hostLocalDir, "hooker/dependencies.txt")
+        if (!hostR.exists() || !hostDependencies.exists()) {
+            def err = new StringBuilder("没有找到 ${hostR.canonicalPath}和${hostDependencies.canonicalPath}, 需要先buildHost\n")
+            throw new InvalidUserDataException(err.toString())
+        }
+        hostPackageManifest.dependenciesFile = hostDependencies
+        hostPackageManifest.originalResourceTxtFile = hostR
+    }
+
+
     PackageManifest getPluginPackageManifest() {
-        if (null == pluginPackageManifest) {
+        if (null == pluginPackageManifest || pluginNeedRefresh) {
+            println("recreate getPluginPackageManifest null ?[${null == pluginPackageManifest}] isNeedFresh[${pluginNeedRefresh}]")
+            pluginNeedRefresh = false
             pluginPackageManifest = new PackageManifest(mProject)
         }
         return pluginPackageManifest
@@ -62,8 +111,9 @@ class ProjectDataCenter {
         if (!PackageManifestUtils.hasAaptProcessed(pluginPackageManifest)) {
             throw new IllegalArgumentException("插件资源初始化失败")
         }
-        if (null == mergedPluginPackageManifest) {
-            mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest , mProject)
+        if (null == mergedPluginPackageManifest || mergedPluginNeedRefresh) {
+            mergedPluginNeedRefresh = false
+            mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest, mProject)
         }
         return mergedPluginPackageManifest
     }
@@ -72,36 +122,5 @@ class ProjectDataCenter {
     PluginConfigExtension getPluginConfigExtension() {
         return mPluginConfigExtension
     }
-
-    def initHostManifest() {
-        String targetHost = mPluginConfigExtension.hostPath
-        if (!targetHost) {
-            def err = new StringBuilder('\nyou should specify the targetHost in build.gradle, e.g.: \n')
-            err.append('    virtualApk {\n')
-            err.append('        //when target Host in local machine, value is host application directory\n')
-            err.append('        targetHost = ../xxxProject/app \n')
-            err.append('    }\n')
-            throw new InvalidUserDataException(err.toString())
-        }
-        File hostLocalDir = new File(targetHost)
-        if (!hostLocalDir.exists()) {
-            def err = "The directory of host application doesn't exist! Dir: ${hostLocalDir.canonicalPath}"
-            throw new InvalidUserDataException(err)
-        }
-
-        File hostR = new File(hostLocalDir, "hooker/original_resource_file.txt")
-        if (!hostR.exists()) {
-            def err = new StringBuilder("Can't find ${hostR.canonicalPath}, please check up your host application\n")
-            throw new InvalidUserDataException(err.toString())
-        }
-        File hostVersions = new File(hostLocalDir, "hooker/dependencies.txt")
-        if (!hostVersions.exists()) {
-            def err = new StringBuilder("Can't find ${hostVersions.canonicalPath}, please check up your host application\n")
-            throw new InvalidUserDataException(err.toString())
-        }
-        hostPackageManifest.dependenciesFile = hostVersions
-        hostPackageManifest.originalResourceTxtFile = hostR
-    }
-
 
 }

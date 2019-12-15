@@ -72,11 +72,6 @@ class ResourceFormatUtils {
         }
         ListMultimap<String, ResourceEntry> resourcesMap = ArrayListMultimap.create()
         RSymbolFile.eachLine { line ->
-            /**
-             *  Line Content:
-             *  Common Res:  int string abc_action_bar_home_description 0x7f090000
-             *  Styleable:   int[] styleable TagLayout { 0x010100af, 0x7f0102b5, 0x7f0102b6 }*            or int styleable TagLayout_android_gravity 0
-             */
             if (!line.empty) {
                 def tokenizer = new StringTokenizer(line)
                 def valueType = tokenizer.nextToken()     // value type (int or int[])

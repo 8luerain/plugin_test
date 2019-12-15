@@ -39,7 +39,7 @@ pluginconfig {
     libraryName 'baselib'
     hostPath "${getRootDir()}/app"
     useHostDependencies true
-    packageId 0x11
+    packageId 0x80
 
 }
 
@@ -53,7 +53,8 @@ dependencies {
 }
 
 autoOutput2Host()
-//
+
+//自动拷贝到host
 def autoOutput2Host() {
     project.afterEvaluate {
         project.tasks.findByName("packageRelease").doLast {

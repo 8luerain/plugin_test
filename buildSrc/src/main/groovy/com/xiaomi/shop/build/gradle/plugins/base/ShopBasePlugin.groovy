@@ -1,8 +1,8 @@
 package com.xiaomi.shop.build.gradle.plugins.base
 
-import com.android.build.gradle.internal.api.ApplicationVariantImpl
+import com.android.build.gradle.AppExtension
+import com.android.build.gradle.api.ApplicationVariant
 import com.android.build.gradle.internal.ide.dependencies.BuildMappingUtils
-import com.android.build.gradle.tasks.ProcessAndroidResources
 import com.android.builder.model.AndroidLibrary
 import com.android.builder.model.Dependencies
 import com.android.builder.model.JavaLibrary
@@ -15,24 +15,15 @@ import com.xiaomi.shop.build.gradle.plugins.utils.CommonFactory
 import com.xiaomi.shop.build.gradle.plugins.utils.FileUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.internal.reflect.Instantiator
-import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 
-import javax.inject.Inject
 import java.util.function.Consumer
 
 class ShopBasePlugin implements Plugin<Project> {
 
     Project mProject
-    public static File mHookerDir
-    public static File aaptResourceDir
-    public static File aaptSourceDir
-    Instantiator mInstantiator
-
-    @Inject
-    ShopBasePlugin(Instantiator instantiator, ToolingModelBuilderRegistry registry) {
-        mInstantiator = instantiator
-    }
+    public File mHookerDir
+    public File aaptResourceDir
+    public File aaptSourceDir
 
     @Override
     void apply(Project project) {
@@ -40,31 +31,74 @@ class ShopBasePlugin implements Plugin<Project> {
             throw new Exception("需要在application中使用")
         }
         mProject = project
-        //创建中间缓存文件
         mHookerDir = new File(project.getProjectDir(), "hooker")
         if (!mHookerDir.exists()) {
             mHookerDir.mkdir()
         }
-        //存放资源
-        aaptResourceDir = new File([mHookerDir, "intermediates", "resource"].join(File.separator))
-        if (aaptResourceDir.exists()) {
-            aaptResourceDir.delete()
+        project.ext.hookerDir = mHookerDir
+        project.afterEvaluate {
+            AppExtension androidExt = project.extensions.findByType(AppExtension)
+            androidExt.applicationVariants.each { variant ->
+                if (variant.buildType.name != "release") {
+                    return
+                }
+                //清除hooker中间文件
+                project.tasks.findByName("clean").doLast {
+                    if (mHookerDir.exists()) {
+                        mHookerDir.deleteDir()
+                    }
+                }
+                //生成dependencies文件
+                project.tasks.findByName("pre${variant.name.capitalize()}Build").doLast {
+                    generateDependencies(variant, null)
+                    onBeforePreBuildTask()
+                }
+                //生成resource文件
+                project.tasks["process${variant.name.capitalize()}Resources"].doLast { task ->
+                    mProject.copy {
+                        from task.textSymbolOutputFile
+                        into mHookerDir
+                        rename { "original_resource_file.txt" }
+                    }
+                }
+            }
         }
-        aaptResourceDir.mkdir()
-        //存放源码
-        aaptSourceDir = new File([mHookerDir, "intermediates", "source", "r"].join(File.separator))
-        if (aaptSourceDir.exists()) {
-            aaptSourceDir.delete()
-        }
-        aaptSourceDir.mkdir()
     }
 
-    def generateDependencies(ApplicationVariantImpl applicationVariant, PackageManifest packageManifest) {
+    protected onBeforePreBuildTask() {
+
+    }
+
+    def createAaptWorkspace() {
+        println("method createWorkDir")
+        //创建中间缓存文件
+        //存放资源
+        aaptResourceDir = new File([mHookerDir, "intermediates", "resource"].join(File.separator))
+        if (!aaptResourceDir.parentFile.exists()) {
+            aaptResourceDir.parentFile.mkdirs()
+        }
+        if (!aaptResourceDir.exists()) {
+            aaptResourceDir.mkdir()
+        }
+        //存放源码
+        aaptSourceDir = new File([mHookerDir, "intermediates", "source", "r"].join(File.separator))
+        if (!aaptSourceDir.parentFile.exists()) {
+            aaptSourceDir.parentFile.mkdirs()
+        }
+        if (!aaptSourceDir.exists()) {
+            aaptSourceDir.mkdir()
+        }
+        mProject.ext.aaptResourceDir = aaptResourceDir
+        mProject.ext.aaptSourceDir = aaptSourceDir
+    }
+
+    def generateDependencies(ApplicationVariant applicationVariant, PackageManifest packageManifest) {
+
         if (!applicationVariant.buildType.name.equalsIgnoreCase("release")) {
             return
         }
         FileUtil.saveFile(mHookerDir, "dependencies", {
-            List<String> deps = new ArrayList<String>()
+            List<String> dependenciesList = new ArrayList<String>()
             Consumer consumer = new Consumer<SyncIssue>() {
                 @Override
                 void accept(SyncIssue syncIssue) {
@@ -80,43 +114,42 @@ class ShopBasePlugin implements Plugin<Project> {
 
             dependencies.getLibraries().each { AndroidLibrary androidLibrary ->
                 def androidCoordinates = androidLibrary.resolvedCoordinates
-                deps.add(androidLibrary.name)
-                packageManifest.aarDependenciesLibs.add(
-                        new AarDependenceInfo(
-                                androidCoordinates.groupId,
-                                androidCoordinates.artifactId,
-                                androidCoordinates.version,
-                                androidLibrary))
+                dependenciesList.add(androidLibrary.name)
+                if (null != packageManifest) {
+                    packageManifest.aarDependenciesLibs.add(
+                            new AarDependenceInfo(
+                                    androidCoordinates.groupId,
+                                    androidCoordinates.artifactId,
+                                    androidCoordinates.version,
+                                    androidLibrary))
+                }
+
             }
             dependencies.getJavaLibraries().each { JavaLibrary library ->
 //                println(" dependencies.getLibraries()[${library.name}]")
-                deps.add(library.name)
+                dependenciesList.add(library.name)
                 def jarCoordinates = library.resolvedCoordinates
-                packageManifest.jarDependenciesLibs.add(
-                        new JarDependenceInfo(
-                                jarCoordinates.groupId,
-                                jarCoordinates.artifactId,
-                                jarCoordinates.version,
-                                library))
+                if (null != packageManifest) {
+                    packageManifest.jarDependenciesLibs.add(
+                            new JarDependenceInfo(
+                                    jarCoordinates.groupId,
+                                    jarCoordinates.artifactId,
+                                    jarCoordinates.version,
+                                    library))
+                }
+
             }
             dependencies.getProjects().each { String path ->
 //                println(" dependencies.getProjects[${path}]")
-                deps.add(path)
+                dependenciesList.add(path)
 
             }
-            Collections.sort(deps)
+            Collections.sort(dependenciesList)
 
-            return deps
+            return dependenciesList
         })
 
-        ProcessAndroidResources aaptTask = mProject.tasks["process${applicationVariant.name.capitalize()}Resources"]
-        aaptTask.doLast {
-            mProject.copy {
-                from aaptTask.textSymbolOutputFile
-                into mHookerDir
-                rename { "original_resource_file.txt" }
-            }
-        }
+
     }
 
     Project getProject() {
@@ -131,7 +164,4 @@ class ShopBasePlugin implements Plugin<Project> {
         return aaptResourceDir
     }
 
-    Instantiator getInstantiator() {
-        return mInstantiator
-    }
 }

@@ -3,7 +3,6 @@ package com.xiaomi.shop.build.gradle.plugins.bean
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.common.collect.Lists
-import com.xiaomi.shop.build.gradle.plugins.ShopPlugin
 import com.xiaomi.shop.build.gradle.plugins.bean.dependence.AarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.bean.dependence.JarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.bean.res.ResourceEntry
@@ -73,7 +72,7 @@ class PackageManifest {
     }
 
     ListMultimap<String, ResourceEntry> getResourcesMap() {
-        if (this.mResourcesMap == null) {
+        if (mResourcesMap == null) {
             parseRFile()
         }
         return mResourcesMap
@@ -87,7 +86,8 @@ class PackageManifest {
     }
 
     File getRJavaFile() {
-        File updatedRJava = new File([ShopPlugin.aaptSourceDir, packagePath, "R.java"].join(File.separator))
+        println("getRJavaFile packagePath [${packagePath}]")
+        File updatedRJava = new File([mProject.ext.aaptSourceDir, packagePath, "R.java"].join(File.separator))
         return generateRJavaInner(updatedRJava, packageName, getResourcesMap(), getStyleablesList())
     }
 
@@ -165,12 +165,8 @@ class PackageManifest {
         if (!originalResourceTxtFile.exists()) {
             return
         }
-        if (mResourcesMap == null) {
-            mResourcesMap = ArrayListMultimap.create()
-        }
-        if (mStyleablesList == null) {
-            mStyleablesList = new ArrayList<>()
-        }
+        mResourcesMap = ArrayListMultimap.create()
+        mStyleablesList = new ArrayList<>()
         originalResourceTxtFile.eachLine { line ->
             if (!line.empty) {
                 def tokenizer = new StringTokenizer(line)
