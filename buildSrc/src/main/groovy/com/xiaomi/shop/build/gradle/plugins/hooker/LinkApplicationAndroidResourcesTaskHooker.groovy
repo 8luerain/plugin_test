@@ -57,9 +57,16 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
     void handleResource(LinkApplicationAndroidResourcesTask task) {
         File apFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
         File aaptResourceDir = project.ext.aaptResourceDir
+        File aaptSourceDir = project.ext.aaptSourceDir
         if (aaptResourceDir.exists()) {
-            aaptResourceDir.deleteDir()
+            println("aaptResourceDir.deleteDir() [${aaptResourceDir.deleteDir()}]")
+//            aaptResourceDir.deleteDir()
         }
+        if (aaptSourceDir.exists()) {
+            println("aaptSourceDir.deleteDir() [${aaptSourceDir.deleteDir()}]")
+//            aaptResourceDir.deleteDir()
+        }
+
         def removedFileList = [] as HashSet<String> //记录需要删除的文件
         def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改

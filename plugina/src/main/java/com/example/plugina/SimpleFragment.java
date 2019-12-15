@@ -23,7 +23,9 @@ public class SimpleFragment extends Fragment {
         Log.d("SimpleFragment", "onCreateView: R.drawable.aaa_client[" + Integer.toHexString(R.drawable.aaa_client) + "]");
         mRootView = inflater.inflate(R.layout.fragment_plugin_simple, null);
         viewById = mRootView.findViewById(R.id.img_simple);
-        viewById.setImageResource(R.drawable.aaa_client);
+//        viewById.setImageResource(R.drawable.aaa_client);
+        viewById.setImageResource(R.drawable.baselib_img);
+//        viewById.setImageResource(R.drawable.plugin_img);
         return mRootView;
     }
 }
