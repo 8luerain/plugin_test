@@ -1,22 +1,26 @@
 package com.xiaomi.shop.build.gradle.plugins
 
-import com.android.build.gradle.internal.api.ApplicationVariantImpl
-import com.xiaomi.shop.build.gradle.plugins.base.ShopBasePlugin
+import com.xiaomi.shop.build.gradle.plugins.base.BaseGradlePlugin
 import com.xiaomi.shop.build.gradle.plugins.hooker.StableHostResourceHooker
 import com.xiaomi.shop.build.gradle.plugins.hooker.manager.TaskHookerManager
+import org.gradle.api.Plugin
 import org.gradle.api.Project
 
-class ShopHostPlugin extends ShopBasePlugin {
+class HostGradlePlugin extends BaseGradlePlugin {
 
     HostTaskHookerManager mTaskHookerManager
 
     @Override
     void apply(Project project) {
         super.apply(project)
+    }
+
+    @Override
+    protected onBeforePreBuildTask() {
         mTaskHookerManager = new HostTaskHookerManager(project)
-        project.afterEvaluate {
-            mTaskHookerManager.registerTaskHookers()
-        }
+        mTaskHookerManager.registerTaskHookers(this)
+        loadDependencies(null)
+        backupOriginalRFile()
     }
 
     static class HostTaskHookerManager extends TaskHookerManager {
@@ -26,13 +30,8 @@ class ShopHostPlugin extends ShopBasePlugin {
         }
 
         @Override
-        void registerTaskHookers() {
-            android.applicationVariants.all { ApplicationVariantImpl appVariant ->
-                if (!appVariant.buildType.name.equalsIgnoreCase("release")) {
-                    return
-                }
-                registerTaskHooker(new StableHostResourceHooker(mProject, appVariant))
-            }
+        void registerTaskHookers(Plugin plugin) {
+            registerTaskHooker(new StableHostResourceHooker(mProject, ((HostGradlePlugin) plugin).mAppReleaseVariant))
         }
     }
 }

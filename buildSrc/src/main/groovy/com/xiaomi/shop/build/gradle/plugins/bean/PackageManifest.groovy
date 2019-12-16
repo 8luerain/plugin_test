@@ -91,6 +91,13 @@ class PackageManifest {
         return generateRJavaInner(updatedRJava, packageName, getResourcesMap(), getStyleablesList())
     }
 
+    /**
+     * 生成R Java文件
+     * @param dest
+     * @param pkg
+     * @param resources
+     * @param styleables
+     */
     protected void generateRJavaInner(File dest, String pkg, ListMultimap<String, ResourceEntry> resources, List<StyleableEntry> styleables) {
         if (!dest.parentFile.exists()) {
             dest.parentFile.mkdirs()

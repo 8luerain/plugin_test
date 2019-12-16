@@ -11,19 +11,23 @@ import com.google.common.collect.ImmutableMap
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.dependence.AarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.bean.dependence.JarDependenceInfo
-import com.xiaomi.shop.build.gradle.plugins.utils.CommonFactory
 import com.xiaomi.shop.build.gradle.plugins.utils.FileUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 import java.util.function.Consumer
 
-class ShopBasePlugin implements Plugin<Project> {
+class BaseGradlePlugin implements Plugin<Project> {
 
     Project mProject
+    AppExtension mAndroidExtension
+    ApplicationVariant mAppReleaseVariant
+
     public File mHookerDir
     public File aaptResourceDir
     public File aaptSourceDir
+    public File outputDir
+    public File mDependenciesFile
 
     @Override
     void apply(Project project) {
@@ -32,35 +36,22 @@ class ShopBasePlugin implements Plugin<Project> {
         }
         mProject = project
         mHookerDir = new File(project.getProjectDir(), "hooker")
-        if (!mHookerDir.exists()) {
-            mHookerDir.mkdir()
-        }
-        project.ext.hookerDir = mHookerDir
+        mDependenciesFile = new File(mHookerDir, "dependencies.txt")
         project.afterEvaluate {
-            AppExtension androidExt = project.extensions.findByType(AppExtension)
-            androidExt.applicationVariants.each { variant ->
-                if (variant.buildType.name != "release") {
-                    return
+            mAndroidExtension = project.extensions.findByType(AppExtension)
+            mAppReleaseVariant = mAndroidExtension.applicationVariants.find {
+                it.name == "release"// 暂时不支持flavor
+            }
+            //清除hooker中间文件
+            project.tasks.findByName("clean").doLast {
+                if (mHookerDir.exists()) {
+                    mHookerDir.deleteDir()
                 }
-                //清除hooker中间文件
-                project.tasks.findByName("clean").doLast {
-                    if (mHookerDir.exists()) {
-                        mHookerDir.deleteDir()
-                    }
-                }
-                //生成dependencies文件
-                project.tasks.findByName("pre${variant.name.capitalize()}Build").doLast {
-                    generateDependencies(variant, null)
-                    onBeforePreBuildTask()
-                }
-                //生成resource文件
-                project.tasks["process${variant.name.capitalize()}Resources"].doLast { task ->
-                    mProject.copy {
-                        from task.textSymbolOutputFile
-                        into mHookerDir
-                        rename { "original_resource_file.txt" }
-                    }
-                }
+            }
+            //生成dependencies文件
+            project.tasks.findByName("pre${mAppReleaseVariant.name.capitalize()}Build").doFirst {
+                createHookerDir()
+                onBeforePreBuildTask()
             }
         }
     }
@@ -69,9 +60,34 @@ class ShopBasePlugin implements Plugin<Project> {
 
     }
 
+
+    /**
+     * 备份R.txt文件
+     * @param variant
+     * @return
+     */
+    def backupOriginalRFile() {
+        //生成resource文件
+        project.tasks["process${mAppReleaseVariant.name.capitalize()}Resources"].doLast { task ->
+            mProject.copy {
+                from task.textSymbolOutputFile
+                into mHookerDir
+                rename { "original_resource_file.txt" }
+            }
+        }
+    }
+
+    def createHookerDir() {
+        if (!mHookerDir.exists()) {
+            mHookerDir.mkdir()
+        }
+        project.ext.hookerDir = mHookerDir
+    }
+
     def createAaptWorkspace() {
         println("method createWorkDir")
         //创建中间缓存文件
+        createHookerDir()
         //存放资源
         aaptResourceDir = new File([mHookerDir, "intermediates", "resource"].join(File.separator))
         if (!aaptResourceDir.parentFile.exists()) {
@@ -88,16 +104,20 @@ class ShopBasePlugin implements Plugin<Project> {
         if (!aaptSourceDir.exists()) {
             aaptSourceDir.mkdir()
         }
+        outputDir = new File([mHookerDir, "outputs"].join(File.separator))
+        if (!outputDir.parentFile.exists()) {
+            outputDir.parentFile.mkdirs()
+        }
+        if (!outputDir.exists()) {
+            outputDir.mkdir()
+        }
         mProject.ext.aaptResourceDir = aaptResourceDir
         mProject.ext.aaptSourceDir = aaptSourceDir
+        mProject.ext.outputDir = outputDir
     }
 
-    def generateDependencies(ApplicationVariant applicationVariant, PackageManifest packageManifest) {
-
-        if (!applicationVariant.buildType.name.equalsIgnoreCase("release")) {
-            return
-        }
-        FileUtil.saveFile(mHookerDir, "dependencies", {
+    def loadDependencies(PackageManifest packageManifest) {
+        def collectAction = {
             List<String> dependenciesList = new ArrayList<String>()
             Consumer consumer = new Consumer<SyncIssue>() {
                 @Override
@@ -107,9 +127,9 @@ class ShopBasePlugin implements Plugin<Project> {
             ImmutableMap<String, String> buildMapping =
                     BuildMappingUtils.computeBuildMapping(mProject.getGradle())
 
-            Dependencies dependencies = CommonFactory.getInstance()
-                    .getArtifactDependencyGraph(applicationVariant.variantData.scope, false,
-                            buildMapping, consumer)
+            Dependencies dependencies = ApiVersionFactory.getInstance()
+                    .getArtifactDependencyGraph(mAppReleaseVariant.variantData.scope,
+                            false, buildMapping, consumer)
 
 
             dependencies.getLibraries().each { AndroidLibrary androidLibrary ->
@@ -147,9 +167,12 @@ class ShopBasePlugin implements Plugin<Project> {
             Collections.sort(dependenciesList)
 
             return dependenciesList
-        })
-
-
+        }
+        if (mDependenciesFile.exists()) {
+            collectAction()
+        } else {
+            FileUtil.saveFile(mHookerDir, "dependencies", collectAction)
+        }
     }
 
     Project getProject() {

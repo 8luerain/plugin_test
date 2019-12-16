@@ -76,7 +76,7 @@ class ProjectDataCenter {
     def initHostManifest() {
         String targetHost = mPluginConfigExtension.hostPath
         if (!targetHost) {
-            def err = new StringBuilder('\n需要指定host路径 targetHost = ../xxxProject/app \n')
+            def err = new StringBuilder("\n必须需要指定host路径 targetHost = ../xxxProject/app \n")
             throw new InvalidUserDataException(err.toString())
         }
         File hostLocalDir = new File(targetHost)
@@ -87,7 +87,10 @@ class ProjectDataCenter {
         File hostR = new File(hostLocalDir, "hooker/original_resource_file.txt")
         File hostDependencies = new File(hostLocalDir, "hooker/dependencies.txt")
         if (!hostR.exists() || !hostDependencies.exists()) {
-            def err = new StringBuilder("没有找到 ${hostR.canonicalPath}和${hostDependencies.canonicalPath}, 需要先buildHost\n")
+            def err = new StringBuilder("没有找到 \n" +
+                    "[${hostR.canonicalPath}] \n" +
+                    "${hostDependencies.canonicalPath}\n," +
+                    " 需要先buildHost\n")
             throw new InvalidUserDataException(err.toString())
         }
         hostPackageManifest.dependenciesFile = hostDependencies

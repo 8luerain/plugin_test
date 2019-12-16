@@ -1,33 +1,22 @@
 package com.xiaomi.shop.build.gradle.plugins.hooker
 
 import com.android.build.gradle.api.ApkVariant
-import com.android.build.gradle.internal.ide.dependencies.ArtifactDependencyGraph
-import com.android.build.gradle.internal.tasks.AppPreBuildTask
-import com.android.builder.model.Dependencies
-import com.android.builder.model.SyncIssue
-import com.google.common.collect.ImmutableMap
-import com.xiaomi.shop.build.gradle.plugins.bean.dependence.AarDependenceInfo
-import com.xiaomi.shop.build.gradle.plugins.bean.dependence.DependenceInfo
-import com.xiaomi.shop.build.gradle.plugins.bean.dependence.JarDependenceInfo
-import com.xiaomi.shop.build.gradle.plugins.utils.Log
+import com.xiaomi.shop.build.gradle.plugins.ModuleGradlePlugin
+import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
+import com.xiaomi.shop.build.gradle.plugins.utils.ProjectDataCenter
+import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-
-import java.util.function.Consumer
 
 /**
  * 负责收集project所有的依赖,主要包括三种 1:aar类型 2:jar类型 3:project类型
+ * preBuildTask为占位的锚点
  */
-class AppPreBuildTaskHooker extends GradleTaskHooker<AppPreBuildTask> {
+class AppPreBuildTaskHooker extends GradleTaskHooker<DefaultTask> {
+    ModuleGradlePlugin plugin
 
-    //group:artifact:version
-    def hostDependencies = [] as Set
-
-    def retainedAarLibs = [] as Set<AarDependenceInfo>
-    def retainedJarLib = [] as Set<JarDependenceInfo>
-    def stripDependencies = [] as Collection<DependenceInfo>
-
-    public AppPreBuildTaskHooker(Project project, ApkVariant apkVariant) {
+    AppPreBuildTaskHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
+        plugin = project.plugins.findPlugin(ModuleGradlePlugin.class)
     }
 
     @Override
@@ -35,134 +24,45 @@ class AppPreBuildTaskHooker extends GradleTaskHooker<AppPreBuildTask> {
         return scope.getTaskName('pre', 'Build')
     }
 
-    /**
-     * Collect host dependencies via hostDependenceFile or exclude configuration before PrepareDependenciesTask execute,
-     * @param task Gradle Task fo PrepareDependenciesTask
-     */
-    @Override
-    void beforeTaskExecute(AppPreBuildTask task) {
 
-        hostDependencies.addAll(virtualApk.hostDependencies.keySet())
-        hostDependencies.each {
-            println()
-        }
-        virtualApk.excludes.each { String artifact ->
-            final def module = artifact.split(':')
-            hostDependencies.add("${module[0]}:${module[1]}")
-        }
+    @Override
+    void beforeTaskExecute(DefaultTask task) {
+        println("AppPreBuildTaskHooker beforeTaskExecute")
+
+
+    }
+
+    @Override
+    void afterTaskExecute(DefaultTask task) {
+        println("AppPreBuildTaskHooker afterTaskExecute")
+        loadDependenciesMap()
     }
 
     /**
-     * Classify all dependencies into retainedAarLibs & retainedJarLib & stripDependencies
-     *
-     * @param task Gradle Task fo PrepareDependenciesTask
+     * 初始化依赖相关的内存对象
      */
-    @Override
-    void afterTaskExecute(AppPreBuildTask task) {
-        Consumer consumer = new Consumer<SyncIssue>() {
-            @Override
-            void accept(SyncIssue syncIssue) {
-                Log.i 'PrepareDependenciesHooker', "Error: ${syncIssue}"
+    void loadDependenciesMap() {
+        PluginConfigExtension extension = project.pluginconfig
+        ProjectDataCenter projectDataCenter = ProjectDataCenter.getInstance(project)
+        //host
+        Project hostProject = project.getRootProject().getAllprojects().find {
+            it != project.getRootProject() && extension.hostPath.contains(it.name)
+        }
+        if (null != hostProject) {
+            def hostReleaseVariant = hostProject.android.applicationVariants.find {
+                it.name == "release"// 暂时不支持flavor
+            }
+            if (null != hostReleaseVariant) {
+                projectDataCenter.hostPackageManifest.packageName = hostReleaseVariant.applicationId
+                projectDataCenter.hostPackageManifest.packagePath = hostReleaseVariant.applicationId.replace('.'.charAt(0), File.separatorChar)
+                plugin.loadDependencies(projectDataCenter.hostPackageManifest)
             }
         }
-        Dependencies dependencies
-        if (project.extensions.extraProperties.get(Constants.GRADLE_3_1_0)) {
-            ImmutableMap<String, String> buildMapping = Reflect.on('com.android.build.gradle.internal.ide.ModelBuilder')
-                    .call('computeBuildMapping', project.gradle)
-                    .get()
-            dependencies = new ArtifactDependencyGraph().createDependencies(scope, false, buildMapping, consumer)
-        } else {
-            dependencies = new ArtifactDependencyGraph().createDependencies(scope, false, consumer)
-        }
-
-        dependencies.libraries.each {
-            def mavenCoordinates = it.resolvedCoordinates
-            if (hostDependencies.contains("${mavenCoordinates.groupId}:${mavenCoordinates.artifactId}")) {
-                Log.i 'PrepareDependenciesHooker', "Need strip aar: ${mavenCoordinates.groupId}:${mavenCoordinates.artifactId}:${mavenCoordinates.version}"
-                stripDependencies.add(
-                        new AarDependenceInfo(
-                                mavenCoordinates.groupId,
-                                mavenCoordinates.artifactId,
-                                mavenCoordinates.version,
-                                it))
-
-            } else {
-                Log.i 'PrepareDependenciesHooker', "Need retain aar: ${mavenCoordinates.groupId}:${mavenCoordinates.artifactId}:${mavenCoordinates.version}"
-                retainedAarLibs.add(
-                        new AarDependenceInfo(
-                                mavenCoordinates.groupId,
-                                mavenCoordinates.artifactId,
-                                mavenCoordinates.version,
-                                it))
-            }
-
-        }
-        dependencies.javaLibraries.each {
-            def mavenCoordinates = it.resolvedCoordinates
-            if (hostDependencies.contains("${mavenCoordinates.groupId}:${mavenCoordinates.artifactId}")) {
-                Log.i 'PrepareDependenciesHooker', "Need strip jar: ${mavenCoordinates.groupId}:${mavenCoordinates.artifactId}:${mavenCoordinates.version}"
-                stripDependencies.add(
-                        new JarDependenceInfo(
-                                mavenCoordinates.groupId,
-                                mavenCoordinates.artifactId,
-                                mavenCoordinates.version,
-                                it))
-            } else {
-                Log.i 'PrepareDependenciesHooker', "Need retain jar: ${mavenCoordinates.groupId}:${mavenCoordinates.artifactId}:${mavenCoordinates.version}"
-                retainedJarLib.add(
-                        new JarDependenceInfo(
-                                mavenCoordinates.groupId,
-                                mavenCoordinates.artifactId,
-                                mavenCoordinates.version,
-                                it))
-            }
-
-        }
-
-        File hostDir = vaContext.getBuildDir(scope)
-        FileUtil.saveFile(hostDir, "${taskName}-stripDependencies", stripDependencies)
-        FileUtil.saveFile(hostDir, "${taskName}-retainedAarLibs", retainedAarLibs)
-        FileUtil.saveFile(hostDir, "${taskName}-retainedJarLib", retainedJarLib)
-
-        checkDependencies()
-
-        Log.i 'PrepareDependenciesHooker', "Analyzed all dependencis. Get more infomation in dir: ${hostDir.absoluteFile}"
-
-        vaContext.stripDependencies = stripDependencies
-        vaContext.retainedAarLibs = retainedAarLibs
-        mark()
+        projectDataCenter.pluginPackageManifest.packageName = plugin.mAppReleaseVariant.applicationId
+        projectDataCenter.pluginPackageManifest.packagePath = plugin.mAppReleaseVariant.applicationId.replace('.'.charAt(0), File.separatorChar)
+        projectDataCenter.pluginPackageManifest.dependenciesFile = plugin.mDependenciesFile
+        println("has set mDependenciesFile")
+        plugin.loadDependencies(projectDataCenter.pluginPackageManifest)
     }
 
-    void checkDependencies() {
-        ArrayList<DependenceInfo> allRetainedDependencies = new ArrayList<>()
-        allRetainedDependencies.addAll(retainedAarLibs)
-        allRetainedDependencies.addAll(retainedJarLib)
-
-        ArrayList<String> checked = new ArrayList<>()
-
-        allRetainedDependencies.each {
-            String group = it.group
-            String artifact = it.artifact
-            String version = it.version
-
-            // com.didi.virtualapk:core
-            if (group == 'com.didi.virtualapk' && artifact == 'core') {
-                checked.add("${group}:${artifact}:${version}")
-            }
-
-            // com.android.support:all
-            if (group == 'com.android.support' || group.startsWith('com.android.support.')) {
-                checked.add("${group}:${artifact}:${version}")
-            }
-
-            // com.android.databinding:all
-            if (group == 'com.android.databinding' || group.startsWith('com.android.databinding.')) {
-                checked.add("${group}:${artifact}:${version}")
-            }
-        }
-
-        if (!checked.empty) {
-            throw new Exception("The dependencies [${String.join(', ', checked)}] that will be used in the current plugin must be included in the host app first. Please add it in the host app as well.")
-        }
-    }
 }

@@ -158,7 +158,6 @@ class MergedPackageManifest extends PackageManifest {
                     } else {
                         //重新排序
                         typeSet.add(key)
-                        println("newTypeIdnewTypeId [${typeSet.size()}]")
                         it.setNewResourceId(packageId, typeSet.size(), entryId++)
                         mMergedResourcesMap.put(it.resourceType, it)
                     }

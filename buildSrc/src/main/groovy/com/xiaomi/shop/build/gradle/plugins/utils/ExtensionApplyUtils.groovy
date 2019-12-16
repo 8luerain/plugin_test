@@ -18,6 +18,7 @@ class ExtensionApplyUtils {
 
                     ModuleVersionSelector pluginDependency = pluginDr.requested
                     PluginConfigExtension pluginConfigExtension = ProjectDataCenter.getInstance(project).pluginConfigExtension
+
                     def hostDependency = ProjectDataCenter.getInstance(project).hostPackageManifest
                             .dependenciesMap.get("${pluginDependency.group}:${pluginDependency.name}")
 
@@ -41,6 +42,5 @@ class ExtensionApplyUtils {
                 }
             }
         }
-
     }
 }

@@ -1,24 +1,25 @@
-package com.xiaomi.shop.build.gradle.plugins.utils
+package com.xiaomi.shop.build.gradle.plugins.base
 
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.internal.TaskManager
 import com.android.build.gradle.internal.tasks.factory.TaskFactory
 import com.android.builder.model.Dependencies
+import com.xiaomi.shop.build.gradle.plugins.utils.Reflect
 import org.gradle.api.Project
 
 /**
  * 根据api版本构造对应对象，应对不同版本差异
  *
  * */
-class CommonFactory {
+class ApiVersionFactory {
     public static final String GRADLE_VERSION_310 = "V_3.1.0"
     public static final String GRADLE_VERSION_332 = "V_3.3.2"
 
 
-    String mGradleVersionMinVersion = "1.0.0";
-    static CommonFactory mInstance
+    static mGradleVersionMinVersion = "1.0.0"
+    static ApiVersionFactory mInstance
 
-    CommonFactory() {
+    ApiVersionFactory() {
         try {
             Class.forName('com.android.builder.core.VariantConfiguration')
         } catch (Throwable e) {
@@ -26,18 +27,18 @@ class CommonFactory {
         }
     }
 
-    static CommonFactory getInstance() {
+    static ApiVersionFactory getInstance() {
         if (null == mInstance) {
-            synchronized (CommonFactory.class) {
+            synchronized (ApiVersionFactory.class) {
                 if (null == mInstance) {
-                    mInstance = new CommonFactory()
+                    mInstance = new ApiVersionFactory()
                 }
             }
         }
         return mInstance
     }
 
-    TaskFactory getTaskManager(Project project) {
+    TaskFactory getTaskFactory(Project project) {
         TaskFactory factory
         AppPlugin appPlugin = project.plugins.findPlugin(AppPlugin)
         if (mGradleVersionMinVersion == GRADLE_VERSION_310) {

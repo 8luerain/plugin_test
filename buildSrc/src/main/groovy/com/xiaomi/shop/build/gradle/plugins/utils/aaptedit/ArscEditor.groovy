@@ -91,7 +91,7 @@ public class ArscEditor extends AssetEditor {
         // Create the mapping of type ids
         LinkedHashMap<Object, Integer> typeIdMap = new LinkedHashMap<>()
         t.typeList.specs.eachWithIndex { it, i ->
-            println(" t.typeList.specs.eachWithIndex typeID[${it.id.intValue()}] , index[${i}]")
+//            println(" t.typeList.specs.eachWithIndex typeID[${it.id.intValue()}] , index[${i}]")
             typeIdMap.put(it.id.intValue(), i)
         }
 
@@ -120,7 +120,7 @@ public class ArscEditor extends AssetEditor {
             }
             //------------- it.id 某[资源类型ID]  string[] ------------comment by mao
             def specIndex = typeIdMap.get(typeEntry.id)
-            println("typeEntry.name [${typeEntry.name}]  typeEntry.id [${typeEntry.id}]  specIndex [${specIndex}]")
+//            println("typeEntry.name [${typeEntry.name}]  typeEntry.id [${typeEntry.id}]  specIndex [${specIndex}]")
             def ts = t.typeList.specs[specIndex]
             //------------- es  某type下所有资源 ------------comment by mao
             def typeEntry_entries = typeEntry.entries
@@ -138,7 +138,7 @@ public class ArscEditor extends AssetEditor {
             ts.id = retainedTypeSpecs.size() + 1
             // Filter config entries
             def configs = []
-            println("ts.configs size [${ts.configs.size}]")
+//            println("ts.configs size [${ts.configs.size}]")
             ts.configs.each {
                 def entries = []
                 def offsets = []
@@ -162,7 +162,7 @@ public class ArscEditor extends AssetEditor {
                     }
 
                     def eTablename = new String(t.keyStringPool.strings[entryTable.key]).replaceAll('\\.', '_')
-                    println("srsc tale entryInput.name[${entryInput.name}] entryInput.id[${entryInput.id}] <--enrty [${entryTable}]--> eTablename[${eTablename}] entryTable.key[${entryTable.key}]")
+//                    println("srsc tale entryInput.name[${entryInput.name}] entryInput.id[${entryInput.id}] <--enrty [${entryTable}]--> eTablename[${eTablename}] entryTable.key[${entryTable.key}]")
                     if (entryInput.name != eTablename) {
                         throw new Exception("Required entryTable '${entryInput.name}' but got '$eTablename', This " +
                                 "is seems to unsupport the buildToolsRevision: ${version}.")

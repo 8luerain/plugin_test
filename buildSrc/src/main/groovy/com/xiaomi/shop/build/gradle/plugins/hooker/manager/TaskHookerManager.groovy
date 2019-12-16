@@ -3,25 +3,26 @@ package com.xiaomi.shop.build.gradle.plugins.hooker.manager
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformTask
 import com.xiaomi.shop.build.gradle.plugins.hooker.GradleTaskHooker
+import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
 
-public abstract class TaskHookerManager {
+abstract class TaskHookerManager {
 
     protected Map<String, GradleTaskHooker> taskHookerMap = new HashMap<>()
 
     protected Project mProject
     protected AppExtension android
 
-    public TaskHookerManager(Project project) {
+    TaskHookerManager(Project project) {
         this.mProject = project
         android = project.extensions.findByType(AppExtension)
         project.gradle.addListener(new MishopTaskListener())
     }
 
-    public abstract void registerTaskHookers()
+    abstract void registerTaskHookers(Plugin plugin)
 
     protected void registerTaskHooker(GradleTaskHooker taskHooker) {
         taskHooker.setTaskHookerManager(this)

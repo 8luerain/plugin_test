@@ -37,8 +37,8 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
-        aaptTask.outputs.getFiles().each {
-
+        mPluginManifest.dependenciesMap.values().each {
+            println("real plugin dep [${it}]")
         }
     }
 
@@ -77,7 +77,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         reGenerateRText()
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
-        modifyItemOfArscFile(aaptResourceDir, task ,modifyFileList)
+        modifyItemOfArscFile(aaptResourceDir, task, modifyFileList)
 
         //4:处理xml文件，对资源文件的引用
         modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
@@ -133,17 +133,16 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         }
     }
 
-    private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task , Set<String> modifyFileList) {
+    private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task, Set<String> modifyFileList) {
         MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
         def libRefTable = ["${mergeManifest.packageId}": task.applicationId]
-        println("libRefTable [${libRefTable}]")
+//        println("libRefTable [${libRefTable}]")
         final File arscFile = new File(aaptResourceDir, 'resources.arsc')
         modifyFileList.add("resources.arsc")
         final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsRevision)
         arscEditor.slice(mergeManifest.packageId, mergeManifest.resIdMapForArsc, libRefTable,
                 mergeManifest.resourcesMapForAapt)
     }
-
 
 
     private void modifyItemOfXmlFile(File aaptResourceDir, Set<String> modifyFileList) {
@@ -193,7 +192,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.generateAarLibRJava2Dir()
         project.copy {
             from project.ext.aaptSourceDir
-            into  mPluginManifest.sourceOutputFileDir
+            into mPluginManifest.sourceOutputFileDir
         }
     }
 

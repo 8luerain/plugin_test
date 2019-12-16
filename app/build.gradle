@@ -18,6 +18,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    //暂时没有适配flavor
+//    flavorDimensions "version"
+//    productFlavors {
+//        demo {
+//            applicationIdSuffix ".demo"
+//        }
+//        full {
+//            applicationIdSuffix ".full"
+//        }
+//    }
 }
 
 dependencies {
