@@ -37,9 +37,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask aaptTask) {
-        mPluginManifest.dependenciesMap.values().each {
-            println("real plugin dep [${it}]")
-        }
+
     }
 
     @Override
@@ -59,12 +57,10 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
         File aaptResourceDir = project.ext.aaptResourceDir
         File aaptSourceDir = project.ext.aaptSourceDir
         if (aaptResourceDir.exists()) {
-            println("aaptResourceDir.deleteDir() [${aaptResourceDir.deleteDir()}]")
-//            aaptResourceDir.deleteDir()
+            aaptResourceDir.deleteDir()
         }
         if (aaptSourceDir.exists()) {
-            println("aaptSourceDir.deleteDir() [${aaptSourceDir.deleteDir()}]")
-//            aaptResourceDir.deleteDir()
+            aaptResourceDir.deleteDir()
         }
 
         def removedFileList = [] as HashSet<String> //记录需要删除的文件

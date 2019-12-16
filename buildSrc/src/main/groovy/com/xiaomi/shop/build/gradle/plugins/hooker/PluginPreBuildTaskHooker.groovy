@@ -11,10 +11,10 @@ import org.gradle.api.Project
  * 负责收集project所有的依赖,主要包括三种 1:aar类型 2:jar类型 3:project类型
  * preBuildTask为占位的锚点
  */
-class AppPreBuildTaskHooker extends GradleTaskHooker<DefaultTask> {
+class PluginPreBuildTaskHooker extends GradleTaskHooker<DefaultTask> {
     ModuleGradlePlugin plugin
 
-    AppPreBuildTaskHooker(Project project, ApkVariant apkVariant) {
+    PluginPreBuildTaskHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
         plugin = project.plugins.findPlugin(ModuleGradlePlugin.class)
     }

@@ -21,10 +21,12 @@ public class SimpleFragment extends Fragment {
         Log.d("SimpleFragment", "onCreateView: R.layout.fragment_plugin_simple[" + Integer.toHexString(R.layout.fragment_plugin_simple) + "]");
         Log.d("SimpleFragment", "onCreateView: R.id.img_simple[" + Integer.toHexString(R.id.img_simple) + "]");
         Log.d("SimpleFragment", "onCreateView: R.drawable.aaa_client[" + Integer.toHexString(R.drawable.aaa_client) + "]");
+        Log.d("SimpleFragment", "onCreateView: R.drawable.baselib_img_3[" + Integer.toHexString(R.drawable.baselib_img_3) + "]");
+        Log.d("SimpleFragment", "onCreateView: R.drawable.baselib_mario[" + Integer.toHexString(R.drawable.baselib_mario) + "]");
         mRootView = inflater.inflate(R.layout.fragment_plugin_simple, null);
         viewById = mRootView.findViewById(R.id.img_simple);
 //        viewById.setImageResource(R.drawable.aaa_client);
-        viewById.setImageResource(R.drawable.baselib_img_3);
+        viewById.setImageResource(R.drawable.baselib_mario);
 //        viewById.setImageResource(R.drawable.plugin_img);
         return mRootView;
     }

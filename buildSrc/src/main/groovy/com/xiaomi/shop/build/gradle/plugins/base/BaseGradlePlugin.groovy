@@ -14,6 +14,7 @@ import com.xiaomi.shop.build.gradle.plugins.bean.dependence.JarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.utils.FileUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 
 import java.util.function.Consumer
 
@@ -49,7 +50,11 @@ class BaseGradlePlugin implements Plugin<Project> {
                 }
             }
             //生成dependencies文件
-            project.tasks.findByName("pre${mAppReleaseVariant.name.capitalize()}Build").doFirst {
+            Task preBuild = project.tasks.findByName("pre${mAppReleaseVariant.name.capitalize()}Build")
+            preBuild.outputs.upToDateWhen {
+                false
+            }
+            preBuild.doFirst {
                 createHookerDir()
                 onBeforePreBuildTask()
             }

@@ -23,7 +23,6 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
         super(project, apkVariant)
         apkVariant.applicationId
 //        mStableOutputFile = new File([ShopBasePlugin.mHookerDir, sFileOutputName].join(File.separator))
-        mStableInputFile = new File([project.ext.hookerDir, sFileInputName].join(File.separator))
         mAndroidExtension = project.getExtensions().findByType(AppExtension.class)
 //        configStableParam()
     }
@@ -35,6 +34,7 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 //            mStableOutputFile.delete()
 //        }
 //        mStableOutputFile.createNewFile()
+        mStableInputFile = new File([project.ext.hookerDir, sFileInputName].join(File.separator))
         if (mStableInputFile.exists()) {
             task.aaptOptions.additionalParameters("--stable-ids", "${mStableInputFile}")
         }

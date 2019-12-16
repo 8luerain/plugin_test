@@ -66,6 +66,7 @@ class ProjectDataCenter {
 
     PackageManifest getHostPackageManifest() {
         if (null == hostPackageManifest || hostNeedRefresh) {
+            println("create new hostPackageManifest ")
             hostNeedRefresh = false
             hostPackageManifest = new PackageManifest(mProject)
             initHostManifest()
@@ -115,6 +116,7 @@ class ProjectDataCenter {
             throw new IllegalArgumentException("插件资源初始化失败")
         }
         if (null == mergedPluginPackageManifest || mergedPluginNeedRefresh) {
+            println("create new mergedPluginPackageManifest ")
             mergedPluginNeedRefresh = false
             mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest, mProject)
         }

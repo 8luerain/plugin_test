@@ -6,36 +6,31 @@ import com.android.build.gradle.internal.tasks.IncrementalTask
 import com.android.build.gradle.internal.tasks.factory.VariantTaskCreationAction
 import com.xiaomi.shop.build.gradle.plugins.utils.Log
 import org.gradle.api.Project
-import org.gradle.api.tasks.OutputDirectory
 
 class AssembleFilteredPluginTask extends IncrementalTask {
     public static final String GROUP = "filter"
     public static final String TASK_NAME_PREFIX = "assembleFiltered"
 
     File outputDir
+    File outputApkFile
     File originalApkFile
     ApplicationVariant applicationVariant
-
-    @Override
-    protected boolean isIncremental() {
-        return false
-    }
 
     @Override
     protected void doFullTaskAction() throws Exception {
         applicationVariant.outputs.each {
             Log.i(name, "移动package至hooker文件夹 [${it.outputFile}]")
         }
+        String outputFileName = "${getProject().name}_filtered.apk";
+        outputApkFile = new File(outputDir, outputFileName)
+        if (outputApkFile.exists()) {
+            outputApkFile.delete()
+        }
         getProject().copy {
             from originalApkFile
             into outputDir
-            rename { "${getProject().name}_filtered.apk" }
+            rename { outputFileName }
         }
-    }
-
-    @OutputDirectory
-    File getOutputDir() {
-        return outputDir
     }
 
     static class AssembleFilteredPluginCreationAction extends VariantTaskCreationAction<AssembleFilteredPluginTask> {
@@ -69,6 +64,7 @@ class AssembleFilteredPluginTask extends IncrementalTask {
             task.originalApkFile = mVariant.outputs[0].outputFile
             task.dependsOn(mVariant.assembleProvider.name)
             task.setDescription("assemble{${mVariant.name.capitalize()}")
+            task.outputs.upToDateWhen { false }
         }
     }
 }
