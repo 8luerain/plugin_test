@@ -19,7 +19,7 @@ abstract class TaskHookerManager {
     TaskHookerManager(Project project) {
         this.mProject = project
         android = project.extensions.findByType(AppExtension)
-        project.gradle.addListener(new MishopTaskListener())
+        project.gradle.addListener(new MiShopTaskListener())
     }
 
     abstract void registerTaskHookers(Plugin plugin)
@@ -41,29 +41,29 @@ abstract class TaskHookerManager {
     }
 
 
-    private class MishopTaskListener implements TaskExecutionListener {
+    private class MiShopTaskListener implements TaskExecutionListener {
 
         @Override
         void beforeExecute(Task task) {
-//            if (task.project == project) {
-            if (task in TransformTask) {
-                taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.beforeTaskExecute(task)
-            } else {
-                taskHookerMap[task.name]?.beforeTaskExecute(task)
+            if (task.project == mProject) {
+                if (task in TransformTask) {
+                    taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.beforeTaskExecute(task)
+                } else {
+                    taskHookerMap[task.name]?.beforeTaskExecute(task)
+                }
             }
-//            }
         }
 
         @Override
         void afterExecute(Task task, TaskState taskState) {
 
-//            if (task.project == project) {
-            if (task in TransformTask) {
-                taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.afterTaskExecute(task)
-            } else {
-                taskHookerMap[task.name]?.afterTaskExecute(task)
+            if (task.project == mProject) {
+                if (task in TransformTask) {
+                    taskHookerMap["${task.transform.name}For${task.variantName.capitalize()}".toString()]?.afterTaskExecute(task)
+                } else {
+                    taskHookerMap[task.name]?.afterTaskExecute(task)
+                }
             }
-//            }
 //            recordInputAndOutput(task)
         }
 
