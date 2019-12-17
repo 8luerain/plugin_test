@@ -85,9 +85,8 @@ class PackageManifest {
         return mStyleablesList
     }
 
-    File getRJavaFile() {
-        println("getRJavaFile packagePath [${packagePath}]")
-        File updatedRJava = new File([mProject.ext.aaptSourceDir, packagePath, "R.java"].join(File.separator))
+    File getRJavaFile(File aaptSourceDir) {
+        File updatedRJava = new File([aaptSourceDir, packagePath, "R.java"].join(File.separator))
         return generateRJavaInner(updatedRJava, packageName, getResourcesMap(), getStyleablesList())
     }
 

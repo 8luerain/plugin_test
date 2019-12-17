@@ -21,7 +21,7 @@ class AssembleFilteredPluginTask extends IncrementalTask {
         applicationVariant.outputs.each {
             Log.i(name, "移动package至hooker文件夹 [${it.outputFile}]")
         }
-        String outputFileName = "${getProject().name}_filtered.apk";
+        String outputFileName = "${getProject().name}_${applicationVariant.name}_filtered.apk";
         outputApkFile = new File(outputDir, outputFileName)
         if (outputApkFile.exists()) {
             outputApkFile.delete()
@@ -58,7 +58,7 @@ class AssembleFilteredPluginTask extends IncrementalTask {
         @Override
         void configure(@NonNull AssembleFilteredPluginTask task) {
             super.configure(task)
-            task.outputDir = new File([mProject.getProjectDir(), "hooker", "outputs"].join(File.separator))
+            task.outputDir = new File([mProject.getProjectDir(), "hooker", mVariant.name, "outputs"].join(File.separator))
             task.setGroup(GROUP)
             task.applicationVariant = mVariant
             task.originalApkFile = mVariant.outputs[0].outputFile

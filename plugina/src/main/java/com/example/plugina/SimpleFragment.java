@@ -23,13 +23,15 @@ public class SimpleFragment extends Fragment {
         Log.d("SimpleFragment", "onCreateView: R.drawable.aaa_client[" + Integer.toHexString(R.drawable.aaa_client) + "]");
         Log.d("SimpleFragment", "onCreateView: R.drawable.baselib_img_3[" + Integer.toHexString(R.drawable.baselib_img_3) + "]");
         Log.d("SimpleFragment", "onCreateView: R.drawable.base_lib_2020[" + Integer.toHexString(R.drawable.base_lib_2020) + "]");
+        Log.d("SimpleFragment", "onCreateView: R.drawable.baselib_2021[" + Integer.toHexString(R.drawable.baselib_2021) + "]");
 //        Log.d("SimpleFragment", "onCreateView: R.drawable.baselib_mario[" + Integer.toHexString(R.drawable.baselib_mario) + "]");
         mRootView = inflater.inflate(R.layout.fragment_plugin_simple, null);
         viewById = mRootView.findViewById(R.id.img_simple);
 //        viewById.setImageResource(R.drawable.aaa_client);
 //        viewById.setImageResource(R.drawable.baselib_mario);
 //        viewById.setImageResource(R.drawable.plugin_img);
-        viewById.setImageResource(R.drawable.base_lib_2020);
+//        viewById.setImageResource(R.drawable.baselib_2021);
+        viewById.setImageResource(R.drawable.baselib_good);
         return mRootView;
     }
 }

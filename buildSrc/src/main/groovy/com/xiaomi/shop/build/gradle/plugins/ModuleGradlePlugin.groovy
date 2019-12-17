@@ -40,12 +40,15 @@ class ModuleGradlePlugin extends BaseGradlePlugin {
         injectBaseExtension(project)
         hookVariantFactory()
         project.afterEvaluate {
-            injectCustomBuildTask(project, mAppReleaseVariant)
+            mApplicationVariants.each { variant ->
+                injectCustomBuildTask(project, variant)
+            }
         }
     }
 
-    /*插入自定义extension*/
-
+    /**
+     插入自定义extension
+     */
     def injectBaseExtension(Project project) {
         project.getExtensions().add("pluginconfig", PluginConfigExtension)
         mPluginExtension = project.extensions.findByType(PluginConfigExtension)
@@ -76,7 +79,7 @@ class ModuleGradlePlugin extends BaseGradlePlugin {
                                 it.contains(AssembleFilteredPluginTask.TASK_NAME_PREFIX)
                             }
                             isTaskOfFilter = (result != null)
-                            if (isTaskOfFilter) {
+                            if (isTaskOfFilter) { //只应答自己的task
                                 initialConfig(project)
                             }
                         }
@@ -86,21 +89,19 @@ class ModuleGradlePlugin extends BaseGradlePlugin {
         reflect.set('variantFactory', variantFactory)
     }
 
-
     @Override
     /**
      * 在preBuildTask前调用
      * @return
      */
-    protected onBeforePreBuildTask() {
-        println("onBeforePreBuildTask")
+    protected onBeforePreBuildTask(ApplicationVariant variant) {
+        //创建工作目录
+        createAaptWorkspace(variant)
     }
 
     void initialConfig(Project project) {
         //初始化dataCenter
-        ProjectDataCenter.init(project).needRefresh = true
-        //创建工作目录
-        createAaptWorkspace()
+        ProjectDataCenter.init(project)
         //检查host依赖
         checkHostDependencies()
         //同步依赖版本
@@ -124,15 +125,26 @@ class ModuleGradlePlugin extends BaseGradlePlugin {
             def err = "此路径不存在: ${hostLocalDir.canonicalPath}"
             throw new InvalidUserDataException(err)
         }
-        File hostR = new File(hostLocalDir, "hooker/original_resource_file.txt")
-        File hostDependencies = new File(hostLocalDir, "hooker/dependencies.txt")
-        if (!hostR.exists() || !hostDependencies.exists()) {
+        //Todo 读取release版本的依赖, 得想下区别
+        File releaseHostR = new File(hostLocalDir, "hooker/release/original_resource_file.txt")
+        File debugHostR = new File(hostLocalDir, "hooker/debug/original_resource_file.txt")
+        File hostDependencies = new File(hostLocalDir, "hooker/release/dependencies.txt")
+        if (!releaseHostR.exists() || !debugHostR.exists() || !hostDependencies.exists()) {
             def err = new StringBuilder("没有找到 \n" +
-                    "[${hostR.canonicalPath}] \n" +
+                    "[${releaseHostR.canonicalPath}] \n" +
+                    "[${debugHostR.canonicalPath}] \n" +
                     "${hostDependencies.canonicalPath}\n," +
                     " 需要先buildHost\n")
             throw new InvalidUserDataException(err.toString())
         }
-        ProjectDataCenter.getInstance(project).hostPackageManifest.dependenciesFile = hostDependencies
+        ProjectDataCenter.getInstance(project, ProjectDataCenter.TYPE_DEBUG).hostPackageManifest
+                .dependenciesFile = hostDependencies
+        ProjectDataCenter.getInstance(project, ProjectDataCenter.TYPE_RELEASE).hostPackageManifest
+                .dependenciesFile = hostDependencies
+
+        ProjectDataCenter.getInstance(project, ProjectDataCenter.TYPE_DEBUG).hostPackageManifest
+                .originalResourceTxtFile = debugHostR
+        ProjectDataCenter.getInstance(project, ProjectDataCenter.TYPE_RELEASE).hostPackageManifest
+                .originalResourceTxtFile = releaseHostR
     }
 }

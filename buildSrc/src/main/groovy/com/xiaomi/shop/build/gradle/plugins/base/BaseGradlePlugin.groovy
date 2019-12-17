@@ -12,6 +12,8 @@ import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.dependence.AarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.bean.dependence.JarDependenceInfo
 import com.xiaomi.shop.build.gradle.plugins.utils.FileUtil
+import com.xiaomi.shop.build.gradle.plugins.utils.Log
+import org.gradle.api.DomainObjectSet
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -23,6 +25,8 @@ class BaseGradlePlugin implements Plugin<Project> {
     Project mProject
     AppExtension mAndroidExtension
     ApplicationVariant mAppReleaseVariant
+    ApplicationVariant mAppDebugVariant
+    protected DomainObjectSet<ApplicationVariant> mApplicationVariants
 
     public File mHookerDir
     public File aaptResourceDir
@@ -40,8 +44,12 @@ class BaseGradlePlugin implements Plugin<Project> {
         mDependenciesFile = new File(mHookerDir, "dependencies.txt")
         project.afterEvaluate {
             mAndroidExtension = project.extensions.findByType(AppExtension)
-            mAppReleaseVariant = mAndroidExtension.applicationVariants.find {
+            mApplicationVariants = mAndroidExtension.applicationVariants
+            mAppReleaseVariant = mApplicationVariants.find {
                 it.name == "release"// 暂时不支持flavor
+            }
+            mAppDebugVariant = mApplicationVariants.find {
+                it.name == "debug"// 暂时不支持flavor
             }
             //清除hooker中间文件
             project.tasks.findByName("clean").doLast {
@@ -50,18 +58,25 @@ class BaseGradlePlugin implements Plugin<Project> {
                 }
             }
             //生成dependencies文件
-            Task preBuild = project.tasks.findByName("pre${mAppReleaseVariant.name.capitalize()}Build")
-            preBuild.outputs.upToDateWhen {
-                false
+            mAndroidExtension.applicationVariants.each { variant ->
+                if (variant.name == "release" || variant.name == "debug") {
+                    Task preBuild = project.tasks.findByName("pre${variant.name.capitalize()}Build")
+                    preBuild.outputs.upToDateWhen {
+                        false
+                    }
+                    preBuild.doFirst {
+                        createHookerDir(variant)
+                        onBeforePreBuildTask(variant)
+                    }
+                } else {
+                    Log.e(project.name, "抱歉,暂不支持此[$variant.name]!")
+                }
             }
-            preBuild.doFirst {
-                createHookerDir()
-                onBeforePreBuildTask()
-            }
+
         }
     }
 
-    protected onBeforePreBuildTask() {
+    protected onBeforePreBuildTask(ApplicationVariant variant) {
 
     }
 
@@ -71,30 +86,33 @@ class BaseGradlePlugin implements Plugin<Project> {
      * @param variant
      * @return
      */
-    def backupOriginalRFile() {
+    def backupOriginalRFile(ApplicationVariant variant) {
         //生成resource文件
-        project.tasks["process${mAppReleaseVariant.name.capitalize()}Resources"].doLast { task ->
+        project.tasks["process${variant.name.capitalize()}Resources"].doLast { task ->
             mProject.copy {
                 from task.textSymbolOutputFile
-                into mHookerDir
+                into project.ext."hookerDir_${variant.name}"
                 rename { "original_resource_file.txt" }
             }
         }
     }
 
-    def createHookerDir() {
+    def createHookerDir(ApplicationVariant variant) {
         if (!mHookerDir.exists()) {
             mHookerDir.mkdir()
         }
-        project.ext.hookerDir = mHookerDir
+        File dirWithVariant = new File(mHookerDir, variant.name)
+        dirWithVariant.mkdir()
+        println("createHookerDir [${dirWithVariant}]")
+        project.ext."hookerDir_${variant.name}" = dirWithVariant
     }
 
-    def createAaptWorkspace() {
+    def createAaptWorkspace(ApplicationVariant variant) {
         println("method createWorkDir")
         //创建中间缓存文件
-        createHookerDir()
+        createHookerDir(variant)
         //存放资源
-        aaptResourceDir = new File([mHookerDir, "intermediates", "resource"].join(File.separator))
+        File aaptResourceDir = new File([project.ext."hookerDir_${variant.name}", "intermediates", "resource"].join(File.separator))
         if (!aaptResourceDir.parentFile.exists()) {
             aaptResourceDir.parentFile.mkdirs()
         }
@@ -102,26 +120,27 @@ class BaseGradlePlugin implements Plugin<Project> {
             aaptResourceDir.mkdir()
         }
         //存放源码
-        aaptSourceDir = new File([mHookerDir, "intermediates", "source", "r"].join(File.separator))
+        File aaptSourceDir = new File([project.ext."hookerDir_${variant.name}", "intermediates", "source", "r"].join(File.separator))
         if (!aaptSourceDir.parentFile.exists()) {
             aaptSourceDir.parentFile.mkdirs()
         }
         if (!aaptSourceDir.exists()) {
             aaptSourceDir.mkdir()
         }
-        outputDir = new File([mHookerDir, "outputs"].join(File.separator))
+        File outputDir = new File([project.ext."hookerDir_${variant.name}", "outputs"].join(File.separator))
         if (!outputDir.parentFile.exists()) {
             outputDir.parentFile.mkdirs()
         }
         if (!outputDir.exists()) {
             outputDir.mkdir()
         }
-        mProject.ext.aaptResourceDir = aaptResourceDir
-        mProject.ext.aaptSourceDir = aaptSourceDir
-        mProject.ext.outputDir = outputDir
+        mProject.ext."aaptResourceDir_${variant.name}" = aaptResourceDir
+        mProject.ext."aaptSourceDir_${variant.name}" = aaptSourceDir
+        mProject.ext."outputDir_${variant.name}" = outputDir
     }
 
-    def loadDependencies(PackageManifest packageManifest) {
+    def loadDependencies(ApplicationVariant variant, PackageManifest packageManifest) {
+        println("loadDependencies")
         def collectAction = {
             List<String> dependenciesList = new ArrayList<String>()
             Consumer consumer = new Consumer<SyncIssue>() {
@@ -133,7 +152,7 @@ class BaseGradlePlugin implements Plugin<Project> {
                     BuildMappingUtils.computeBuildMapping(mProject.getGradle())
 
             Dependencies dependencies = ApiVersionFactory.getInstance()
-                    .getArtifactDependencyGraph(mAppReleaseVariant.variantData.scope,
+                    .getArtifactDependencyGraph(variant.variantData.scope,
                             false, buildMapping, consumer)
 
 
@@ -173,10 +192,10 @@ class BaseGradlePlugin implements Plugin<Project> {
 
             return dependenciesList
         }
-        if (mDependenciesFile.exists()) {
+        if (new File(project.ext."hookerDir_${variant.name}", "dependencies").exists()) {
             collectAction()
         } else {
-            FileUtil.saveFile(mHookerDir, "dependencies", collectAction)
+            FileUtil.saveFile(project.ext."hookerDir_${variant.name}", "dependencies", collectAction)
         }
     }
 

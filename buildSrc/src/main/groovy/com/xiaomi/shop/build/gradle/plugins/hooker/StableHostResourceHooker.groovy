@@ -21,7 +21,6 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 
     StableHostResourceHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
-        apkVariant.applicationId
 //        mStableOutputFile = new File([ShopBasePlugin.mHookerDir, sFileOutputName].join(File.separator))
         mAndroidExtension = project.getExtensions().findByType(AppExtension.class)
 //        configStableParam()
@@ -34,7 +33,7 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 //            mStableOutputFile.delete()
 //        }
 //        mStableOutputFile.createNewFile()
-        mStableInputFile = new File([project.ext.hookerDir, sFileInputName].join(File.separator))
+        mStableInputFile = new File([project.ext."hookerDir_${apkVariant.name}", sFileInputName].join(File.separator))
         if (mStableInputFile.exists()) {
             task.aaptOptions.additionalParameters("--stable-ids", "${mStableInputFile}")
         }
@@ -44,13 +43,13 @@ class StableHostResourceHooker extends GradleTaskHooker<LinkApplicationAndroidRe
 
     @Override
     void beforeTaskExecute(LinkApplicationAndroidResourcesTask linkAndroidResForBundleTask) {
-        Log.i("StableHostResourceHooker" , "beforeTaskExecute")
+        Log.i("StableHostResourceHooker", "beforeTaskExecute")
         configStableParamFromTask(linkAndroidResForBundleTask)
     }
 
     @Override
     void afterTaskExecute(LinkApplicationAndroidResourcesTask linkAndroidResForBundleTask) {
-        Log.i("StableHostResourceHooker" , "afterTaskExecute")
+        Log.i("StableHostResourceHooker", "afterTaskExecute")
 //        if (mStableOutputFile.exists()) {
 //            mStableOutputFile.delete()
 //        }

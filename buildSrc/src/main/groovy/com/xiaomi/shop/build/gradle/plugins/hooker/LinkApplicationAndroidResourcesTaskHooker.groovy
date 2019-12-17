@@ -21,13 +21,15 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
     AndroidConfig androidConfig
     PackageManifest mPluginManifest
+    MergedPackageManifest mMergedPackageManifest
 
+    File mApFile
+    File mAaptResourceDir
+    File mAaptSourceDir
 
     LinkApplicationAndroidResourcesTaskHooker(Project project, ApkVariant apkVariant) {
         super(project, apkVariant)
         androidConfig = project.extensions.findByType(AppExtension)
-        mPluginManifest = ProjectDataCenter.getInstance(project).pluginPackageManifest
-
     }
 
     @Override
@@ -47,42 +49,50 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
     }
 
     private void initPluginManifest(LinkApplicationAndroidResourcesTask task) {
+        mPluginManifest = ProjectDataCenter.getInstance(project, apkVariant.name).pluginPackageManifest
         mPluginManifest.originalResourceTxtFile = task.textSymbolOutputFile
         mPluginManifest.resourceOutputFileDir = task.resPackageOutputFolder
         mPluginManifest.sourceOutputFileDir = task.sourceOutputDir
-    }
 
+        mMergedPackageManifest = ProjectDataCenter.getInstance(project, apkVariant.name).mergedPluginPackageManifest
+        mApFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
+        mAaptResourceDir = project.ext."aaptResourceDir_${apkVariant.name}"
+        mAaptSourceDir = project.ext."aaptSourceDir_${apkVariant.name}"
+    }
+    /**
+     *   mProject.ext."aaptResourceDir_${variant.name}" = aaptResourceDir
+     *         mProject.ext."aaptSourceDir_${variant.name}" = aaptSourceDir
+     *         mProject.ext."outputDir_${variant.name}" = outputDir
+     *
+     * */
     void handleResource(LinkApplicationAndroidResourcesTask task) {
-        File apFile = new File([task.resPackageOutputFolder, "resources-${scope.fullVariantName}.ap_"].join(File.separator))
-        File aaptResourceDir = project.ext.aaptResourceDir
-        File aaptSourceDir = project.ext.aaptSourceDir
-        if (aaptResourceDir.exists()) {
-            aaptResourceDir.deleteDir()
+        if (mAaptResourceDir.exists()) {
+            mAaptResourceDir.deleteDir()
         }
-        if (aaptSourceDir.exists()) {
-            aaptResourceDir.deleteDir()
+        if (mAaptSourceDir.exists()) {
+            mAaptResourceDir.deleteDir()
         }
 
         def removedFileList = [] as HashSet<String> //记录需要删除的文件
         def modifyFileList = [] as HashSet<String> //记录修改过的文件，用于更换原始ap-file中的文件
         //1:解压ap文件，拷贝目录，准备修改
-        unzip(apFile, aaptResourceDir)
+        unzip(mApFile, mAaptResourceDir)
         //2：删除res资源文件
-        removeSameResourceFile(aaptResourceDir, removedFileList)
+        removeSameResourceFile(mAaptResourceDir, removedFileList)
 
         reGenerateRText()
 
         //3：处理resource.arsc中value资源，并且删除已经过滤的资源对应条目
-        modifyItemOfArscFile(aaptResourceDir, task, modifyFileList)
+        modifyItemOfArscFile(mAaptResourceDir, task, modifyFileList)
 
         //4:处理xml文件，对资源文件的引用
-        modifyItemOfXmlFile(aaptResourceDir, modifyFileList)
+        modifyItemOfXmlFile(mAaptResourceDir, modifyFileList)
 
         //5：处理src文件中中间生产的R文件, 保证后面compileJava时的正确性
         reGenerateRJava()
 
         //6：更新zip文件
-        reProcessResource(apFile, removedFileList, modifyFileList, aaptResourceDir, task)
+        reProcessResource(mApFile, removedFileList, modifyFileList, mAaptResourceDir, task)
     }
 
 
@@ -100,7 +110,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
     }
 
     private void removeSameResourceFile(File aaptResourceDir, Set<String> modifyFileList) {
-        def typeList = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.resourcesMap.keySet()
+        def typeList = mMergedPackageManifest.resourcesMap.keySet()
         def resDir = new File(aaptResourceDir, 'res')
         resDir.listFiles().each { typeDir ->
             def type = typeList.find { typeDir.name == it || typeDir.name.startsWith("${it}-") }
@@ -113,7 +123,7 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
             }
             def entryFiles = typeDir.listFiles()
             def retainedEntryCount = entryFiles.size()
-            def resListOfType = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.resourcesMap.get(type)
+            def resListOfType = mMergedPackageManifest.resourcesMap.get(type)
             entryFiles.each { entryFile ->
                 def entry = resListOfType.find { entryFile.name.startsWith("${it.resourceName}.") }
                 if (entry == null) {
@@ -130,26 +140,24 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
     }
 
     private void modifyItemOfArscFile(File aaptResourceDir, LinkApplicationAndroidResourcesTask task, Set<String> modifyFileList) {
-        MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
-        def libRefTable = ["${mergeManifest.packageId}": task.applicationId]
+        def libRefTable = ["${mMergedPackageManifest.packageId}": task.applicationId]
 //        println("libRefTable [${libRefTable}]")
         final File arscFile = new File(aaptResourceDir, 'resources.arsc')
         modifyFileList.add("resources.arsc")
         final def arscEditor = new ArscEditor(arscFile, androidConfig.buildToolsRevision)
-        arscEditor.slice(mergeManifest.packageId, mergeManifest.resIdMapForArsc, libRefTable,
-                mergeManifest.resourcesMapForAapt)
+        arscEditor.slice(mMergedPackageManifest.packageId, mMergedPackageManifest.resIdMapForArsc, libRefTable,
+                mMergedPackageManifest.resourcesMapForAapt)
     }
 
 
     private void modifyItemOfXmlFile(File aaptResourceDir, Set<String> modifyFileList) {
         final String unixFileFileSeparator = "/"
-        MergedPackageManifest manifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
         int len = aaptResourceDir.canonicalPath.length() + 1
         def isWindows = (File.separator != unixFileFileSeparator) //unix 文件路径分割符为'/'  window路径分隔符为'\'
 
         aaptResourceDir.eachFileRecurse(FileType.FILES) { file ->
             if ('xml'.equalsIgnoreCase(Files.getFileExtension(file.name))) {
-                new AXmlEditor(file).setPackageId(manifest.packageId, manifest.resIdMapForArsc)
+                new AXmlEditor(file).setPackageId(mMergedPackageManifest.packageId, mMergedPackageManifest.resIdMapForArsc)
 
                 if (modifyFileList != null) {
                     def path = file.canonicalPath.substring(len)
@@ -164,30 +172,28 @@ class LinkApplicationAndroidResourcesTaskHooker extends GradleTaskHooker<LinkApp
 
 
     private void reGenerateRText() {
-        MergedPackageManifest mergeManifest = ProjectDataCenter.getInstance(project).mergedPluginPackageManifest
         File rFile = mPluginManifest.originalResourceTxtFile
         rFile.write('')
         rFile.withPrintWriter { pw ->
-            mergeManifest.resourcesMapForAapt.each { t ->
+            mMergedPackageManifest.resourcesMapForAapt.each { t ->
                 t.entries.each { e ->
                     pw.println("${t.type} ${t.name} ${e.name} ${e._vs}")
                 }
             }
-            mergeManifest.styleablesListForAapt.each {
+            mMergedPackageManifest.styleablesListForAapt.each {
                 pw.println("${it.vtype} ${it.type} ${it.key} ${it.idStr}")
             }
         }
     }
 
     private void reGenerateRJava() {
-        File sourceDir = project.ext.aaptSourceDir;
-        if (sourceDir.exists()) {
-            sourceDir.deleteDir()
+        if (mAaptSourceDir.exists()) {
+            mAaptSourceDir.deleteDir()
         }
-        ProjectDataCenter.getInstance(project).pluginPackageManifest.getRJavaFile()
-        ProjectDataCenter.getInstance(project).mergedPluginPackageManifest.generateAarLibRJava2Dir()
+        mPluginManifest.getRJavaFile(mAaptSourceDir)
+        mMergedPackageManifest.generateAarLibRJava2Dir(mAaptSourceDir)
         project.copy {
-            from project.ext.aaptSourceDir
+            from mAaptSourceDir
             into mPluginManifest.sourceOutputFileDir
         }
     }

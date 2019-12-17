@@ -30,7 +30,6 @@ class MergedPackageManifest extends PackageManifest {
         mHostManifest = input
         mPluginManifest = source
         packageId = mProject.getExtensions().findByType(PluginConfigExtension).packageId
-        println("packageIdpackageIdpackageId [${Integer.toHexString(packageId)}]")
     }
 
     Collection<DependenceInfo> getStripDependencies() {
@@ -102,9 +101,9 @@ class MergedPackageManifest extends PackageManifest {
 
 
     //生成依赖aar库对应的R.java文件
-    def generateAarLibRJava2Dir() {
+    def generateAarLibRJava2Dir(File aaptSourceDir) {
         getRetainedAarLibs().each { aarDep ->
-            File rJava = new File([mProject.ext.aaptSourceDir, aarDep.package.replace('.'.charAt(0), File.separatorChar), "R.java"].join(File.separator))
+            File rJava = new File([aaptSourceDir, aarDep.package.replace('.'.charAt(0), File.separatorChar), "R.java"].join(File.separator))
             println("generateAarLibRJava2Dir [${rJava}]")
             generateRJavaInner(rJava, aarDep.package, aarDep.aarResources, aarDep.aarStyleables)
         }
@@ -142,24 +141,30 @@ class MergedPackageManifest extends PackageManifest {
                 t1.typeId - t2.typeId
             }
             Set<String> typeSet = [] as Set
-            resourceIdList.each { resourceEntry ->
-                if (resourceEntry.typeId < 0) {
+            resourceIdList.each { mapItem ->
+                if (mapItem.typeId < 0) {
                     return
                 }
-                String key = resourceEntry.resType
+                String type = mapItem.resType
                 int entryId = 0
-                plugin.get(key).each {
-                    def index = host.get(it.resourceType).indexOf(it)
+                plugin.get(type).each { pluginResEntry ->
+                    def index = host.get(pluginResEntry.resourceType).indexOf(pluginResEntry)
                     if (index >= 0) {//相同的
                         //更新成host的id，保证使用hostAssetManger可以正常找到资源
-                        it.newResourceId = host.get(it.resourceType).get(index).resourceId
+                        pluginResEntry.newResourceId = host.get(pluginResEntry.resourceType).get(index).resourceId
                         //保证后续生成映射map时，能使用带更新过的resID
-                        host.get(it.resourceType).set(index, it)
+                        host.get(pluginResEntry.resourceType).set(index, pluginResEntry)
+//                        println("plugin modify res name[${pluginResEntry.resourceName}] " +
+//                                "org-id[${pluginResEntry.hexResourceId}] " +
+//                                "new-id[${pluginResEntry.hexNewResourceId}]")
                     } else {
                         //重新排序
-                        typeSet.add(key)
-                        it.setNewResourceId(packageId, typeSet.size(), entryId++)
-                        mMergedResourcesMap.put(it.resourceType, it)
+                        typeSet.add(type)
+                        pluginResEntry.setNewResourceId(packageId, typeSet.size(), entryId++)
+//                        println("plugin modify res name[${pluginResEntry.resourceName}] " +
+//                                "org-id[${pluginResEntry.hexResourceId}] " +
+//                                "new-id[${pluginResEntry.hexNewResourceId}]")
+                        mMergedResourcesMap.put(pluginResEntry.resourceType, pluginResEntry)
                     }
                 }
             }

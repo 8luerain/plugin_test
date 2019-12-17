@@ -57,11 +57,13 @@ autoOutput2Host()
 //自动拷贝到host
 def autoOutput2Host() {
     project.afterEvaluate {
-        project.tasks.findByName("packageRelease").doLast {
-            it.outputs.getFiles().each { File output ->
-                if (output.getAbsolutePath().contains("apk")) {
+        project.android.applicationVariants.each { variant ->
+            Task task = project.tasks.findByName("package${variant.name.capitalize()}")
+            if (task) {
+                task.outputs.upToDateWhen { false }
+                task.doLast {
                     project.copy {
-                        from output
+                        from variant.outputs[0].outputFile
                         into new File([project.getRootDir(), "app", "src", "main", "assets", "plugins"].join(File.separator))
                         rename { "plugina.apk" }
                     }
@@ -69,4 +71,5 @@ def autoOutput2Host() {
             }
         }
     }
+
 }

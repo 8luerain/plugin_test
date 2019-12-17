@@ -1,5 +1,6 @@
 package com.xiaomi.shop.build.gradle.plugins
 
+import com.android.build.gradle.api.ApplicationVariant
 import com.xiaomi.shop.build.gradle.plugins.base.BaseGradlePlugin
 import com.xiaomi.shop.build.gradle.plugins.hooker.StableHostResourceHooker
 import com.xiaomi.shop.build.gradle.plugins.hooker.manager.TaskHookerManager
@@ -17,14 +18,12 @@ class HostGradlePlugin extends BaseGradlePlugin {
             mTaskHookerManager = new HostTaskHookerManager(project)
             mTaskHookerManager.registerTaskHookers(this)
         }
-
     }
 
     @Override
-    protected onBeforePreBuildTask() {
-        createHookerDir()
-        loadDependencies(null)
-        backupOriginalRFile()
+    protected onBeforePreBuildTask(ApplicationVariant variant) {
+        loadDependencies(variant, null)
+        backupOriginalRFile(variant)
     }
 
     static class HostTaskHookerManager extends TaskHookerManager {
@@ -35,7 +34,11 @@ class HostGradlePlugin extends BaseGradlePlugin {
 
         @Override
         void registerTaskHookers(Plugin plugin) {
-            registerTaskHooker(new StableHostResourceHooker(mProject, ((HostGradlePlugin) plugin).mAppReleaseVariant))
+            mProject.android.applicationVariants.each {
+                if (it.name == "release" || it.name == "debug") {//目前不支持flavor
+                    registerTaskHooker(new StableHostResourceHooker(mProject, it))
+                }
+            }
         }
     }
 }

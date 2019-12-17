@@ -3,7 +3,6 @@ package com.xiaomi.shop.build.gradle.plugins.utils
 import com.xiaomi.shop.build.gradle.plugins.bean.MergedPackageManifest
 import com.xiaomi.shop.build.gradle.plugins.bean.PackageManifest
 import com.xiaomi.shop.build.gradle.plugins.extension.PluginConfigExtension
-import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
 
 /**
@@ -11,7 +10,10 @@ import org.gradle.api.Project
  *
  * */
 class ProjectDataCenter {
-    static ProjectDataCenter sInstance
+    public static final String TYPE_DEBUG = "debug"
+    public static final String TYPE_RELEASE = "release"
+    static ProjectDataCenter sInstanceRelease
+    static ProjectDataCenter sInstanceDebug
 
     private Project mProject
     private PluginConfigExtension mPluginConfigExtension
@@ -25,24 +27,39 @@ class ProjectDataCenter {
     private boolean pluginNeedRefresh
     private boolean mergedPluginNeedRefresh
 
-    static ProjectDataCenter init(Project project) {
-        return getInstance(project)
+    static void init(Project project) {
+        getInstance(project, TYPE_DEBUG).needRefresh = true
+        getInstance(project, TYPE_RELEASE).needRefresh = true
     }
 
     static ProjectDataCenter getInstance(Project project) {
-        if (null == sInstance) {
+        return getInstance(project, TYPE_RELEASE)
+    }
+
+    static ProjectDataCenter getInstance(Project project, String variantName) {
+        if (variantName == TYPE_DEBUG) {
+            if (null == sInstanceDebug) {
+                synchronized (ProjectDataCenter.class) {
+                    if (null == sInstanceDebug) {
+                        sInstanceDebug = new ProjectDataCenter(project)
+                    }
+                }
+            }
+            return sInstanceDebug
+        }
+        if (null == sInstanceRelease) {
             synchronized (ProjectDataCenter.class) {
-                if (null == sInstance) {
-                    sInstance = new ProjectDataCenter(project)
+                if (null == sInstanceRelease) {
+                    sInstanceRelease = new ProjectDataCenter(project)
                 }
             }
         }
-        return sInstance;
+        return sInstanceRelease
     }
 
     ProjectDataCenter(Project project) {
         mProject = project
-        mPluginConfigExtension = mProject.pluginconfig;
+        mPluginConfigExtension = mProject.pluginconfig
     }
 
     Project getProject() {
@@ -69,35 +86,9 @@ class ProjectDataCenter {
             println("create new hostPackageManifest ")
             hostNeedRefresh = false
             hostPackageManifest = new PackageManifest(mProject)
-            initHostManifest()
         }
         return hostPackageManifest
     }
-
-    def initHostManifest() {
-        String targetHost = mPluginConfigExtension.hostPath
-        if (!targetHost) {
-            def err = new StringBuilder("\n必须需要指定host路径 targetHost = ../xxxProject/app \n")
-            throw new InvalidUserDataException(err.toString())
-        }
-        File hostLocalDir = new File(targetHost)
-        if (!hostLocalDir.exists()) {
-            def err = "此路径不存在: ${hostLocalDir.canonicalPath}"
-            throw new InvalidUserDataException(err)
-        }
-        File hostR = new File(hostLocalDir, "hooker/original_resource_file.txt")
-        File hostDependencies = new File(hostLocalDir, "hooker/dependencies.txt")
-        if (!hostR.exists() || !hostDependencies.exists()) {
-            def err = new StringBuilder("没有找到 \n" +
-                    "[${hostR.canonicalPath}] \n" +
-                    "${hostDependencies.canonicalPath}\n," +
-                    " 需要先buildHost\n")
-            throw new InvalidUserDataException(err.toString())
-        }
-        hostPackageManifest.dependenciesFile = hostDependencies
-        hostPackageManifest.originalResourceTxtFile = hostR
-    }
-
 
     PackageManifest getPluginPackageManifest() {
         if (null == pluginPackageManifest || pluginNeedRefresh) {
@@ -116,7 +107,6 @@ class ProjectDataCenter {
             throw new IllegalArgumentException("插件资源初始化失败")
         }
         if (null == mergedPluginPackageManifest || mergedPluginNeedRefresh) {
-            println("create new mergedPluginPackageManifest ")
             mergedPluginNeedRefresh = false
             mergedPluginPackageManifest = new MergedPackageManifest(hostPackageManifest, pluginPackageManifest, mProject)
         }

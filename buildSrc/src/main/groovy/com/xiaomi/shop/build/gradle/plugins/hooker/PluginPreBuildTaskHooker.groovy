@@ -43,26 +43,26 @@ class PluginPreBuildTaskHooker extends GradleTaskHooker<DefaultTask> {
      */
     void loadDependenciesMap() {
         PluginConfigExtension extension = project.pluginconfig
-        ProjectDataCenter projectDataCenter = ProjectDataCenter.getInstance(project)
+        ProjectDataCenter projectDataCenter = ProjectDataCenter.getInstance(project, apkVariant.name)
         //host
         Project hostProject = project.getRootProject().getAllprojects().find {
             it != project.getRootProject() && extension.hostPath.contains(it.name)
         }
         if (null != hostProject) {
             def hostReleaseVariant = hostProject.android.applicationVariants.find {
-                it.name == "release"// 暂时不支持flavor
+                it.name == apkVariant.name// 暂时不支持flavor
             }
             if (null != hostReleaseVariant) {
                 projectDataCenter.hostPackageManifest.packageName = hostReleaseVariant.applicationId
                 projectDataCenter.hostPackageManifest.packagePath = hostReleaseVariant.applicationId.replace('.'.charAt(0), File.separatorChar)
-                plugin.loadDependencies(projectDataCenter.hostPackageManifest)
+                plugin.loadDependencies(apkVariant, projectDataCenter.hostPackageManifest)
             }
         }
-        projectDataCenter.pluginPackageManifest.packageName = plugin.mAppReleaseVariant.applicationId
-        projectDataCenter.pluginPackageManifest.packagePath = plugin.mAppReleaseVariant.applicationId.replace('.'.charAt(0), File.separatorChar)
-        projectDataCenter.pluginPackageManifest.dependenciesFile = plugin.mDependenciesFile
+        projectDataCenter.pluginPackageManifest.packageName = apkVariant.applicationId
+        projectDataCenter.pluginPackageManifest.packagePath = apkVariant.applicationId.replace('.'.charAt(0), File.separatorChar)
+        projectDataCenter.pluginPackageManifest.dependenciesFile =new File(project.ext."hookerDir_${apkVariant.name}" , "dependencies")
         println("has set mDependenciesFile")
-        plugin.loadDependencies(projectDataCenter.pluginPackageManifest)
+        plugin.loadDependencies(apkVariant, projectDataCenter.pluginPackageManifest)
     }
 
 }
